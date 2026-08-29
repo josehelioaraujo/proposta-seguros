@@ -1,7 +1,7 @@
-using System.Net.Http.Json;
-using ContratacaoService.Domain.Ports;
+﻿using System.Net.Http.Json;
+using ContratacaoService.Domain.Ports.Output;
 
-namespace ContratacaoService.Infrastructure.Adapters.Http;
+namespace ContratacaoService.Infrastructure.Adapters.Output.Http;
 
 public class HttpPropostaServiceClient : IPropostaServiceClient
 {

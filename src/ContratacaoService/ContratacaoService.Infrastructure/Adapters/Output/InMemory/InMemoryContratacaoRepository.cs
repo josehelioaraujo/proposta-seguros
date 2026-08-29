@@ -1,7 +1,7 @@
-using ContratacaoService.Domain.Entities;
-using ContratacaoService.Domain.Ports;
+﻿using ContratacaoService.Domain.Entities;
+using ContratacaoService.Domain.Ports.Output;
 
-namespace ContratacaoService.Infrastructure.Adapters.InMemory;
+namespace ContratacaoService.Infrastructure.Adapters.Output.InMemory;
 
 public class InMemoryContratacaoRepository : IContratacaoRepository
 {

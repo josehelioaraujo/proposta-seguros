@@ -1,10 +1,10 @@
-using System.Data;
+﻿using System.Data;
 using Dapper;
 using ContratacaoService.Domain.Entities;
-using ContratacaoService.Domain.Ports;
-using ContratacaoService.Infrastructure.Adapters.Database.Queries;
+using ContratacaoService.Domain.Ports.Output;
+using ContratacaoService.Infrastructure.Adapters.Output.Database.Queries;
 
-namespace ContratacaoService.Infrastructure.Adapters.Database;
+namespace ContratacaoService.Infrastructure.Adapters.Output.Database;
 
 public class DapperContratacaoRepository : IContratacaoRepository
 {

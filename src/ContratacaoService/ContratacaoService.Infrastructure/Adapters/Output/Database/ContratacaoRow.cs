@@ -1,6 +1,6 @@
-using ContratacaoService.Domain.Entities;
+﻿using ContratacaoService.Domain.Entities;
 
-namespace ContratacaoService.Infrastructure.Adapters.Database;
+namespace ContratacaoService.Infrastructure.Adapters.Output.Database;
 
 internal record ContratacaoRow(
     Guid     Id,

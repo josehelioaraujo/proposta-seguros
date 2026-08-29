@@ -1,4 +1,4 @@
-namespace ContratacaoService.Infrastructure.Adapters.Database.Queries;
+﻿namespace ContratacaoService.Infrastructure.Adapters.Output.Database.Queries;
 
 internal static class ContratacaoQueries
 {

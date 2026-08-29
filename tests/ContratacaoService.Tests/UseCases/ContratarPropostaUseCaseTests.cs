@@ -1,8 +1,8 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Moq;
 using ContratacaoService.Application.UseCases.ContratarProposta;
 using ContratacaoService.Domain.Entities;
-using ContratacaoService.Domain.Ports;
+using ContratacaoService.Domain.Ports.Output;
 using ContratacaoService.Domain.Shared;
 using ContratacaoService.Tests.Mocks;
 

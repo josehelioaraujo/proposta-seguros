@@ -1,4 +1,4 @@
-namespace ContratacaoService.Domain.Ports;
+﻿namespace ContratacaoService.Domain.Ports.Output;
 
 public interface IPropostaServiceClient
 {

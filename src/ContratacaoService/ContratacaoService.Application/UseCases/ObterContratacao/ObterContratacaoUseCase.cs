@@ -1,4 +1,4 @@
-using ContratacaoService.Domain.Ports;
+﻿using ContratacaoService.Domain.Ports.Output;
 using ContratacaoService.Domain.Shared;
 
 namespace ContratacaoService.Application.UseCases.ObterContratacao;

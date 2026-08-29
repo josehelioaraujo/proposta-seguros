@@ -1,6 +1,6 @@
-using ContratacaoService.Domain.Entities;
+﻿using ContratacaoService.Domain.Entities;
 
-namespace ContratacaoService.Domain.Ports;
+namespace ContratacaoService.Domain.Ports.Output;
 
 public interface IContratacaoRepository
 {
