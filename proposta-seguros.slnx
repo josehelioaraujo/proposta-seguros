@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/ContratacaoService/">
+    <Project Path="src/ContratacaoService/ContratacaoService.Api/ContratacaoService.Api.csproj" />
+    <Project Path="src/ContratacaoService/ContratacaoService.Application/ContratacaoService.Application.csproj" />
+    <Project Path="src/ContratacaoService/ContratacaoService.Domain/ContratacaoService.Domain.csproj" />
+    <Project Path="src/ContratacaoService/ContratacaoService.Infrastructure/ContratacaoService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/PropostaService/">
+    <Project Path="src/PropostaService/PropostaService.Api/PropostaService.Api.csproj" />
+    <Project Path="src/PropostaService/PropostaService.Application/PropostaService.Application.csproj" />
+    <Project Path="src/PropostaService/PropostaService.Domain/PropostaService.Domain.csproj" />
+    <Project Path="src/PropostaService/PropostaService.Infrastructure/PropostaService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ContratacaoService.Tests/ContratacaoService.Tests.csproj" />
+    <Project Path="tests/PropostaService.Tests/PropostaService.Tests.csproj" />
+  </Folder>
+</Solution>
