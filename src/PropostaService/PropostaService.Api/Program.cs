@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -29,15 +29,22 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// Health Checks — sempre monitora postgres independente da feature flag
-builder.Services.AddHealthChecks()
+// Health Checks
+var usarBancoDados = builder.Configuration.GetValue<bool>("Features:UsarBancoDados");
+
+var healthChecks = builder.Services.AddHealthChecks()
     .AddCheck("proposta-api", () =>
         HealthCheckResult.Healthy("Proposta de Seguros API — online"),
-        tags: ["live"])
-    .AddNpgSql(
+        tags: ["live"]);
+
+// Postgres — so monitora se banco estiver habilitado
+if (usarBancoDados)
+{
+    healthChecks.AddNpgSql(
         connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
         name:             "postgres",
         tags:             ["ready", "db"]);
+}
 
 var app = builder.Build();
 

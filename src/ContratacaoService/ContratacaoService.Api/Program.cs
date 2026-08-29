@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -30,22 +30,29 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Health Checks
-var usarRabbitMQ = builder.Configuration.GetValue<bool>("Features:UsarRabbitMQ");
+var usarBancoDados = builder.Configuration.GetValue<bool>("Features:UsarBancoDados");
+var usarRabbitMQ   = builder.Configuration.GetValue<bool>("Features:UsarRabbitMQ");
 
 var healthChecks = builder.Services.AddHealthChecks()
     .AddCheck("contratacao-api", () =>
         HealthCheckResult.Healthy("Contratacao de Seguros API — online"),
         tags: ["live"])
-    .AddNpgSql(
-        connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
-        name:             "postgres",
-        tags:             ["ready", "db"])
     .AddUrlGroup(
         uri:  new Uri((builder.Configuration["Services:PropostaService"]
-              ?? "http://proposta-api:5001") + "/health/live"),
+              ?? "http://localhost:5001") + "/health/live"),
         name: "proposta-service",
         tags: ["ready", "external"]);
 
+// Postgres — so monitora se banco estiver habilitado
+if (usarBancoDados)
+{
+    healthChecks.AddNpgSql(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
+        name:             "postgres",
+        tags:             ["ready", "db"]);
+}
+
+// RabbitMQ — so monitora se estiver habilitado
 if (usarRabbitMQ)
 {
     healthChecks.AddCheck("rabbitmq", () =>
