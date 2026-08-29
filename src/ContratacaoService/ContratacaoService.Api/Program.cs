@@ -8,7 +8,7 @@ using ContratacaoService.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Camadas — Hexagonal
+// Camadas  Hexagonal
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -21,7 +21,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title       = "Contratacao de Seguros API",
         Version     = "v1",
-        Description = "API para contratacao de propostas de seguro — Arquitetura Hexagonal"
+        Description = "API para contratacao de propostas de seguro  Arquitetura Hexagonal"
     });
 });
 
@@ -64,7 +64,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-app.UseHttpsRedirection();
+// Removido UseHttpsRedirection  nao aplicavel em container HTTP
 app.MapControllers();
 
 // Health Check Endpoints
