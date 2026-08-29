@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -8,7 +8,7 @@ using ContratacaoService.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Camadas  Hexagonal
+// Camadas — Hexagonal
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -21,7 +21,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title       = "Contratacao de Seguros API",
         Version     = "v1",
-        Description = "API para contratacao de propostas de seguro  Arquitetura Hexagonal"
+        Description = "API para contratacao de propostas de seguro — Arquitetura Hexagonal"
     });
 });
 
@@ -30,29 +30,27 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Health Checks
-var usarBancoDados = builder.Configuration.GetValue<bool>("Features:UsarBancoDados");
-var usarRabbitMQ   = builder.Configuration.GetValue<bool>("Features:UsarRabbitMQ");
+var usarRabbitMQ = builder.Configuration.GetValue<bool>("Features:UsarRabbitMQ");
 
 var healthChecks = builder.Services.AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy("API online"), tags: ["live"])
-    .AddUrlGroup(
-        uri:  new Uri((builder.Configuration["Services:PropostaService"] ?? "http://proposta-api:5001") + "/health/live"),
-        name: "proposta-service",
-        tags: ["ready", "external"]);
-
-if (usarBancoDados)
-{
-    healthChecks.AddNpgSql(
+    .AddCheck("contratacao-api", () =>
+        HealthCheckResult.Healthy("Contratacao de Seguros API — online"),
+        tags: ["live"])
+    .AddNpgSql(
         connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
         name:             "postgres",
-        tags:             ["db", "ready"]);
-}
+        tags:             ["ready", "db"])
+    .AddUrlGroup(
+        uri:  new Uri((builder.Configuration["Services:PropostaService"]
+              ?? "http://proposta-api:5001") + "/health/live"),
+        name: "proposta-service",
+        tags: ["ready", "external"]);
 
 if (usarRabbitMQ)
 {
     healthChecks.AddCheck("rabbitmq", () =>
-        HealthCheckResult.Healthy("RabbitMQ habilitado"),
-        tags: ["mq", "ready"]);
+        HealthCheckResult.Healthy("RabbitMQ — online"),
+        tags: ["ready", "mq"]);
 }
 
 var app = builder.Build();
@@ -64,7 +62,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-// Removido UseHttpsRedirection  nao aplicavel em container HTTP
 app.MapControllers();
 
 // Health Check Endpoints

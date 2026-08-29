@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using PropostaService.Application.Extensions;
 using PropostaService.Infrastructure.Extensions;
 
@@ -28,19 +29,15 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// Health Checks
-var usarBancoDados = builder.Configuration.GetValue<bool>("Features:UsarBancoDados");
-
-var healthChecks = builder.Services.AddHealthChecks()
-    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("API online"), tags: ["live"]);
-
-if (usarBancoDados)
-{
-    healthChecks.AddNpgSql(
+// Health Checks — sempre monitora postgres independente da feature flag
+builder.Services.AddHealthChecks()
+    .AddCheck("proposta-api", () =>
+        HealthCheckResult.Healthy("Proposta de Seguros API — online"),
+        tags: ["live"])
+    .AddNpgSql(
         connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
         name:             "postgres",
-        tags:             ["db", "ready"]);
-}
+        tags:             ["ready", "db"]);
 
 var app = builder.Build();
 
@@ -51,7 +48,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-app.UseHttpsRedirection();
 app.MapControllers();
 
 // Health Check Endpoints
