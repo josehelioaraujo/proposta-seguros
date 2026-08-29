@@ -1,4 +1,4 @@
-# 🛡️ Proposta de Seguros
+# Proposta de Seguros
 
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
@@ -27,7 +27,7 @@ flowchart TD
         PUC2 --> PD
         PD --> PREP[IPropostaRepository]
         PREP --> INMEM[(InMemory)]
-        PREP --> DAPPER[(PostgreSQL\nDapper)]
+        PREP --> DAPPER[(PostgreSQL Dapper)]
     end
 
     subgraph CS [ContratacaoService :5002]
@@ -37,11 +37,11 @@ flowchart TD
         CUC --> CHTTP[HttpPropostaServiceClient]
         CUC --> CPUB[IEventPublisher]
         CREP --> INMEM2[(InMemory)]
-        CREP --> DAPPER2[(PostgreSQL\nDapper)]
+        CREP --> DAPPER2[(PostgreSQL Dapper)]
         CPUB --> MQ[(RabbitMQ)]
     end
 
-    DB[(PostgreSQL\nseguros_db)]
+    DB[(PostgreSQL seguros_db)]
     CLIENT -->|POST /api/Propostas| PA
     CLIENT -->|POST /api/Contratacoes| CA
     CHTTP -->|GET /api/Propostas/id| PA
@@ -53,12 +53,12 @@ flowchart TD
 
 ## Tecnologias
 
-- .NET 10 · C#
+- .NET 10 / C#
 - PostgreSQL 16 + Dapper
-- RabbitMQ 4 (mensageria — bônus)
+- RabbitMQ 4 (mensageria — bonus)
 - FluentValidation
-- xUnit · Moq · Bogus · FluentAssertions
-- Docker · Docker Compose
+- xUnit / Moq / Bogus / FluentAssertions
+- Docker / Docker Compose
 - Swagger / OpenAPI 3.0
 - ASP.NET Health Checks
 
@@ -66,7 +66,7 @@ flowchart TD
 
 ## Tipos de Seguro (BMG)
 
-| Código | Tipo | Valor Mínimo |
+| Codigo | Tipo | Valor Minimo |
 |--------|------|--------------|
 | 1 | SeguroFGTSProtegido | R$ 50,00 |
 | 2 | SeguroVidaFamiliar | R$ 30,00 |
@@ -78,7 +78,7 @@ flowchart TD
 
 ## Como Executar
 
-### Opção 1 — Docker na VPS (recomendado)
+### Opcao 1 — Docker na VPS (recomendado)
 
 ```bash
 ssh root@2.25.122.11
@@ -86,7 +86,7 @@ cd /home/projetos/proposta-seguros
 ./scripts/apply.sh
 ```
 
-### Opção 2 — Docker local
+### Opcao 2 — Docker local
 
 ```bash
 git clone https://github.com/josehelioaraujo/proposta-seguros.git
@@ -95,7 +95,7 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-### Opção 3 — Local sem Docker
+### Opcao 3 — Local sem Docker
 
 ```bash
 # Terminal 1 — PropostaService
@@ -113,7 +113,7 @@ dotnet run
 
 ### VPS Hostinger
 
-| Serviço | URL |
+| Servico | URL |
 |---|---|
 | PropostaService — Swagger | http://2.25.122.11:5001 |
 | ContratacaoService — Swagger | http://2.25.122.11:5002 |
@@ -121,7 +121,7 @@ dotnet run
 
 ### Local
 
-| Serviço | URL |
+| Servico | URL |
 |---|---|
 | PropostaService — Swagger | http://localhost:5001 |
 | ContratacaoService — Swagger | http://localhost:5002 |
@@ -133,7 +133,7 @@ dotnet run
 
 ### PropostaService
 
-| Método | Rota | Descrição | Status |
+| Metodo | Rota | Descricao | Status |
 |--------|------|-----------|--------|
 | POST | /api/Propostas | Cria uma proposta | 201 |
 | GET | /api/Propostas | Lista todas as propostas | 200 |
@@ -142,146 +142,55 @@ dotnet run
 
 ### ContratacaoService
 
-| Método | Rota | Descrição | Status |
+| Metodo | Rota | Descricao | Status |
 |--------|------|-----------|--------|
 | POST | /api/Contratacoes | Contrata uma proposta aprovada | 201 |
-| GET | /api/Contratacoes/{id} | Busca contratação por ID | 200 |
+| GET | /api/Contratacoes/{id} | Busca contratacao por ID | 200 |
 
 ### Health Checks
 
-| Endpoint | Descrição | PropostaService | ContratacaoService |
-|----------|-----------|-----------------|-------------------|
-| /health | Status geral de todos os checks | :5001/health | :5002/health |
-| /health/live | Liveness — API está viva? | :5001/health/live | :5002/health/live |
-| /health/ready | Readiness — dependências ok? | :5001/health/ready | :5002/health/ready |
-
-**O que cada serviço monitora:**
-
-| Check | PropostaService | ContratacaoService |
-|-------|----------------|--------------------|
-| self | ✅ proposta-api | ✅ contratacao-api |
-| postgres | ✅ (se UsarBancoDados=true) | ✅ (se UsarBancoDados=true) |
-| proposta-service | ❌ | ✅ sempre |
-| rabbitmq | ❌ | ✅ (se UsarRabbitMQ=true) |
+| Endpoint | PropostaService | ContratacaoService |
+|----------|-----------------|-------------------|
+| /health | :5001/health | :5002/health |
+| /health/live | :5001/health/live | :5002/health/live |
+| /health/ready | :5001/health/ready | :5002/health/ready |
 
 ---
 
-## Testando via Postman
+## Migrations SQL
 
-### 1. Importar os arquivos
+As migrations criam os schemas e tabelas no PostgreSQL.
 
-```
-Postman → Import → seleciona os 3 arquivos da pasta docs/postman/:
-├── proposta-seguros.postman_collection.json
-├── env-local.json
-└── env-vps.json
-```
-
-### 2. Selecionar o ambiente
-
-```
-Canto superior direito do Postman:
-├── "Local"          → testa em http://localhost:500x
-└── "VPS Hostinger"  → testa em http://2.25.122.11:500x
-```
-
-### 3. Estrutura da Collection
-
-| Pasta | Descrição |
-|-------|-----------|
-| 01 — Health Checks | Verifica saúde dos dois serviços |
-| 02 — PropostaService | Todos os cenários de proposta |
-| 03 — ContratacaoService | Todos os cenários de contratação |
-| 04 — Fluxo Completo | Fluxo end-to-end básico |
-| 05 — Fluxo VPS InMemory | **Dados aleatórios** — sem banco |
-| 06 — Fluxo VPS PostgreSQL | **Dados aleatórios** — com banco |
-| 07 — Fluxo VPS PostgreSQL + RabbitMQ | **Dados aleatórios** — banco + fila |
-
-### 4. Fluxo Completo — Local
-
-```
-1. Seleciona ambiente "Local"
-2. Clica com botão direito em "04 — Fluxo Completo"
-3. Run folder → Start run
-4. 5 requests executados em sequência ✅
-```
-
-### 5. Fluxos VPS com dados aleatórios
-
-Os fluxos 05, 06 e 07 geram dados automaticamente antes de cada execução:
-
-```javascript
-// Pre-request Script gera automaticamente:
-Nome:  aleatório de uma lista de nomes
-CPF:   aleatório de CPFs válidos
-Tipo:  aleatório entre 1 e 5
-Valor: aleatório acima do mínimo por tipo
-```
-
-#### Cenário 1 — InMemory (sem banco)
+### Aplicar na VPS
 
 ```bash
-# Na VPS — garante InMemory ativo
-./scripts/set-banco.sh --disable
+cd /home/projetos/proposta-seguros
+
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001__create_schema_proposta.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
 ```
 
-```
-Postman → ambiente "VPS Hostinger"
-→ Run folder "05 — Fluxo VPS InMemory"
-```
-
-#### Cenário 2 — PostgreSQL (Dapper)
-
-```bash
-# Na VPS — liga PostgreSQL
-./scripts/set-banco.sh --enable
-```
+### Estrutura criada
 
 ```
-Postman → ambiente "VPS Hostinger"
-→ Run folder "06 — Fluxo VPS PostgreSQL"
-```
-
-#### Cenário 3 — PostgreSQL + RabbitMQ
-
-```bash
-# Na VPS — liga PostgreSQL + RabbitMQ
-./scripts/set-rabbitmq.sh --enable
-```
-
-```
-Postman → ambiente "VPS Hostinger"
-→ Run folder "07 — Fluxo VPS PostgreSQL + RabbitMQ"
-→ Verifica evento na fila: http://2.25.122.11:15672
+seguros_db
+├── schema: proposta
+│   └── tabela: propostas
+│       ├── id, nome_cliente, cpf
+│       ├── tipo_seguro, valor, status
+│       └── criado_em, atualizado_em
+│
+└── schema: contratacao
+    └── tabela: contratacoes
+        ├── id, proposta_id
+        ├── cpf, data_contratacao
 ```
 
 ---
 
-## Feature Flags
-
-| Flag | false (padrão) | true |
-|------|----------------|------|
-| `Features:UsarBancoDados` | InMemory | PostgreSQL via Dapper |
-| `Features:UsarRabbitMQ` | Sem mensageria | Publica PropostaContratadaEvent |
-
-### Scripts de operação (VPS)
-
-```bash
-./scripts/apply.sh                    # aplica flags do .env e sobe containers
-./scripts/set-banco.sh --enable       # liga PostgreSQL
-./scripts/set-banco.sh --disable      # volta para InMemory
-./scripts/set-rabbitmq.sh --enable    # liga RabbitMQ
-./scripts/set-rabbitmq.sh --disable   # desliga RabbitMQ
-./scripts/update.sh                   # git pull + rebuild
-./scripts/status.sh                   # status dos containers + URLs
-./scripts/logs.sh --proposta          # logs PropostaService
-./scripts/logs.sh --contratacao       # logs ContratacaoService
-./scripts/logs.sh --all               # todos os logs
-```
-
----
-
-## Testes Unitários
+## Testes Unitarios
 
 ```bash
 dotnet test .\proposta-seguros.sln
@@ -294,7 +203,205 @@ total: 13 | falhou: 0 | bem-sucedido: 13
 
 ---
 
-## Documentação
+## Testando via Postman
 
-- 📋 [Enunciado do Projeto](docs/enunciado.md)
-- 📬 [Postman Collection](docs/postman/)
+### 1. Importar os arquivos
+
+```
+Postman -> Import -> seleciona os 3 arquivos da pasta docs/postman/:
+├── proposta-seguros.postman_collection.json
+├── env-local.json
+└── env-vps.json
+```
+
+### 2. Selecionar o ambiente
+
+```
+Canto superior direito do Postman:
+├── "Local"          -> http://localhost:500x
+└── "VPS Hostinger"  -> http://2.25.122.11:500x
+```
+
+### 3. Estrutura da Collection
+
+| Pasta | Descricao |
+|-------|-----------|
+| 01 — Health Checks | Verifica saude dos dois servicos |
+| 02 — PropostaService | Todos os cenarios de proposta |
+| 03 — ContratacaoService | Todos os cenarios de contratacao |
+| 04 — Fluxo Completo | Fluxo end-to-end com dados fixos |
+| 05 — Fluxo VPS InMemory | Dados aleatorios — sem banco |
+| 06 — Fluxo VPS PostgreSQL | Dados aleatorios — com banco |
+| 07 — Fluxo VPS PostgreSQL + RabbitMQ | Dados aleatorios — banco + fila |
+
+---
+
+## Simulacao Completa de Testes
+
+### Cenario 1 — InMemory
+
+```bash
+# Na VPS
+./scripts/set-banco.sh --disable
+```
+
+```
+Postman: ambiente "VPS Hostinger"
+Pasta:   "05 — Fluxo VPS InMemory"
+Acao:    Run folder -> Start run
+
+Resultado esperado:
+- 7/7 testes passando
+- Dados gerados automaticamente
+- Fluxo: criar -> aprovar -> contratar -> verificar
+```
+
+### Cenario 2 — PostgreSQL
+
+```bash
+# Aplica migrations
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001__create_schema_proposta.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
+
+# Liga PostgreSQL
+./scripts/set-banco.sh --enable
+```
+
+```
+Postman: ambiente "VPS Hostinger"
+Pasta:   "06 — Fluxo VPS PostgreSQL"
+Acao:    Run folder -> Start run
+
+Resultado esperado:
+- 7/7 testes passando
+- Dados persistidos no PostgreSQL
+- Health check mostra postgres: Healthy
+```
+
+### Cenario 3 — PostgreSQL + RabbitMQ
+
+```bash
+# Liga RabbitMQ
+./scripts/set-rabbitmq.sh --enable
+```
+
+```
+Postman: ambiente "VPS Hostinger"
+Pasta:   "07 — Fluxo VPS PostgreSQL + RabbitMQ"
+Acao:    Run folder -> Start run
+
+Resultado esperado:
+- 7/7 testes passando
+- Evento PropostaContratadaEvent publicado na fila
+- Health check mostra postgres + rabbitmq: Healthy
+
+Verifica a fila:
+URL:     http://2.25.122.11:15672
+Usuario: guest / Senha: guest
+Fila:    proposta.contratada.queue
+```
+
+---
+
+## Feature Flags
+
+| Flag | false (padrao) | true |
+|------|----------------|------|
+| Features:UsarBancoDados | InMemory | PostgreSQL via Dapper |
+| Features:UsarRabbitMQ | Sem mensageria | Publica PropostaContratadaEvent |
+
+### Scripts de operacao (VPS)
+
+```bash
+./scripts/apply.sh                    # aplica flags do .env e sobe containers
+./scripts/set-banco.sh --enable       # liga PostgreSQL
+./scripts/set-banco.sh --disable      # volta para InMemory
+./scripts/set-rabbitmq.sh --enable    # liga RabbitMQ
+./scripts/set-rabbitmq.sh --disable   # desliga RabbitMQ
+./scripts/update.sh                   # git pull + rebuild
+./scripts/status.sh                   # status dos containers e URLs
+./scripts/logs.sh --proposta          # logs PropostaService
+./scripts/logs.sh --contratacao       # logs ContratacaoService
+./scripts/logs.sh --all               # todos os logs
+```
+
+---
+
+## Funcionalidades Bonus
+
+Os itens abaixo nao foram solicitados no enunciado. Foram implementados como
+demonstracao de boas praticas e conhecimento tecnico adicional. Para nao impactar
+o fluxo principal, cada funcionalidade bonus e controlada por feature flags —
+desabilitadas por padrao e habilitadas sob demanda.
+
+### RabbitMQ — Mensageria
+
+O enunciado menciona mensageria como item opcional. O ContratacaoService publica
+o evento PropostaContratadaEvent apos cada contratacao bem-sucedida.
+
+```
+Evento: PropostaContratadaEvent
+Exchange: proposta.exchange (Direct)
+Fila:     proposta.contratada.queue
+
+Consumidores em producao real:
+- ApoliceService   -> gera documento da apolice
+- CobrancaService  -> agenda debito mensal
+- NotificacaoService -> envia email ao cliente
+- SusepService     -> registro regulatorio
+```
+
+Feature flag: Features:UsarRabbitMQ
+
+### Health Checks — ASP.NET Nativo
+
+Implementados usando o sistema nativo do ASP.NET Core sem bibliotecas externas,
+com tres niveis de verificacao por servico.
+
+```
+PropostaService    -> self + postgres (se habilitado)
+ContratacaoService -> self + postgres + proposta-service + rabbitmq
+```
+
+### PostgreSQL + Dapper com Feature Flag
+
+O sistema opera em dois modos sem alteracao de codigo:
+
+```
+UsarBancoDados: false -> InMemory (List<T>) — desenvolvimento
+UsarBancoDados: true  -> PostgreSQL via Dapper — producao
+```
+
+Demonstra o padrao Ports & Adapters na pratica: o mesmo Use Case funciona
+com qualquer repositorio injetado via DI.
+
+### Logging Estruturado
+
+Logging implementado em todos os Use Cases com niveis configurados por ambiente
+via appsettings.json, preparado para integracao futura com Prometheus e Grafana.
+
+### Docker — Multi-stage Build
+
+Imagens construidas em duas etapas: SDK para compilar, runtime para executar.
+Resultado: imagem final de aproximadamente 200MB ao inves de 900MB, sem codigo
+fonte exposto e sem ferramentas de build em producao.
+
+### Deploy em VPS
+
+Sistema em execucao em VPS real na Hostinger (Ubuntu 24.04, Docker 29.7.2),
+acessivel publicamente para avaliacao sem necessidade de setup local.
+
+```
+PropostaService:    http://2.25.122.11:5001
+ContratacaoService: http://2.25.122.11:5002
+```
+
+---
+
+## Documentacao
+
+- [Enunciado do Projeto](docs/enunciado.md)
+- [Postman Collection](docs/postman/)
+- [Migrations SQL](migrations/)
