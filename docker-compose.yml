@@ -1,0 +1,83 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: seguros-postgres
+    environment:
+      POSTGRES_DB:       seguros_db
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d seguros_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seguros-network
+
+  proposta-api:
+    build:
+      context: .
+      dockerfile: src/PropostaService/Dockerfile
+    container_name: proposta-api
+    ports:
+      - "5001:5001"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=seguros_db;Username=postgres;Password=postgres"
+      Features__UsarBancoDados: "true"
+      Features__UsarRabbitMQ:   "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - seguros-network
+    restart: unless-stopped
+
+  contratacao-api:
+    build:
+      context: .
+      dockerfile: src/ContratacaoService/Dockerfile
+    container_name: contratacao-api
+    ports:
+      - "5002:5002"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=seguros_db;Username=postgres;Password=postgres"
+      Features__UsarBancoDados: "true"
+      Features__UsarRabbitMQ:   "false"
+      Services__PropostaService: "http://proposta-api:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      proposta-api:
+        condition: service_started
+    networks:
+      - seguros-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: seguros-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - seguros-network
+    profiles:
+      - rabbitmq
+
+volumes:
+  postgres_data:
+
+networks:
+  seguros-network:
+    driver: bridge
