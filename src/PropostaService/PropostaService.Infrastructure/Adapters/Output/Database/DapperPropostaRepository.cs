@@ -1,8 +1,8 @@
-using System.Data;
+﻿using System.Data;
 using Dapper;
 using PropostaService.Domain.Entities;
 using PropostaService.Domain.Enums;
-using PropostaService.Domain.Ports;
+using PropostaService.Domain.Ports.Output;
 using PropostaService.Infrastructure.Adapters.Database.Queries;
 
 namespace PropostaService.Infrastructure.Adapters.Database;

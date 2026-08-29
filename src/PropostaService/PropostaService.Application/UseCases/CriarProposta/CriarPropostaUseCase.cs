@@ -1,41 +1,63 @@
+﻿using Microsoft.Extensions.Logging;
 using PropostaService.Domain.Entities;
 using PropostaService.Domain.Enums;
-using PropostaService.Domain.Ports;
+using PropostaService.Domain.Ports.Output;
 using PropostaService.Domain.Shared;
 
 namespace PropostaService.Application.UseCases.CriarProposta;
 
 public class CriarPropostaUseCase
 {
-    private readonly IPropostaRepository _repository;
-    private readonly IEnumerable<IRegraSeguro> _regras;
+    private readonly IPropostaRepository              _repository;
+    private readonly IEnumerable<IRegraSeguro>        _regras;
+    private readonly ILogger<CriarPropostaUseCase>    _logger;
 
     public CriarPropostaUseCase(
-        IPropostaRepository repository,
-        IEnumerable<IRegraSeguro> regras)
+        IPropostaRepository           repository,
+        IEnumerable<IRegraSeguro>     regras,
+        ILogger<CriarPropostaUseCase> logger)
     {
         _repository = repository;
         _regras     = regras;
+        _logger     = logger;
     }
 
     public async Task<Result<PropostaResponse>> ExecuteAsync(CriarPropostaRequest request)
     {
-        // Idempotencia — mesmo CPF + mesmo tipo nao pode ter duas propostas EmAnalise
+        _logger.LogInformation(
+            "Criando proposta â€” CPF: {Cpf} | Tipo: {Tipo} | Valor: {Valor:C}",
+            request.Cpf, request.TipoSeguro, request.Valor);
+
+        // Idempotencia
         var existente = await _repository.BuscarPorCpfETipoAsync(request.Cpf, request.TipoSeguro);
         if (existente is not null)
+        {
+            _logger.LogWarning(
+                "Proposta duplicada â€” CPF: {Cpf} | Tipo: {Tipo} | ID existente: {Id}",
+                request.Cpf, request.TipoSeguro, existente.Id);
+
             return Result<PropostaResponse>.Conflict(
                 "Ja existe uma proposta em analise para este CPF e tipo de seguro.");
+        }
 
-        // Regra de negocio — valor minimo por tipo (Strategy Pattern)
+        // Strategy Pattern â€” regra por tipo
         var regra = _regras.FirstOrDefault(r => r.Tipo == request.TipoSeguro);
         if (regra is null)
+        {
+            _logger.LogError("Tipo de seguro nao suportado â€” Tipo: {Tipo}", request.TipoSeguro);
             return Result<PropostaResponse>.Fail("Tipo de seguro nao suportado.");
+        }
 
         if (!regra.ValidarValorMinimo(request.Valor))
+        {
+            _logger.LogWarning(
+                "Valor abaixo do minimo â€” Tipo: {Tipo} | Valor: {Valor:C} | Minimo: {Minimo:C}",
+                request.TipoSeguro, request.Valor, regra.ValorMinimo);
+
             return Result<PropostaResponse>.Unprocessable(
                 $"Valor minimo para {request.TipoSeguro} e {regra.ValorMinimo:C}.");
+        }
 
-        // Factory method — unica forma de criar proposta valida
         var proposta = Proposta.Criar(
             request.NomeCliente,
             request.Cpf,
@@ -43,6 +65,10 @@ public class CriarPropostaUseCase
             request.Valor);
 
         await _repository.AddAsync(proposta);
+
+        _logger.LogInformation(
+            "Proposta criada com sucesso â€” ID: {Id} | CPF: {Cpf} | Tipo: {Tipo}",
+            proposta.Id, proposta.Cpf, proposta.TipoSeguro);
 
         return Result<PropostaResponse>.Created(PropostaResponse.FromEntity(proposta));
     }

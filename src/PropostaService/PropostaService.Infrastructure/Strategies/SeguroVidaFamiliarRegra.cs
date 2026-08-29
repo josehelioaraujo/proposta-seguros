@@ -1,5 +1,5 @@
-using PropostaService.Domain.Enums;
-using PropostaService.Domain.Ports;
+﻿using PropostaService.Domain.Enums;
+using PropostaService.Domain.Ports.Output;
 
 namespace PropostaService.Infrastructure.Strategies;
 

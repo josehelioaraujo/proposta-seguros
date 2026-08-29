@@ -1,7 +1,7 @@
-using PropostaService.Domain.Entities;
+﻿using PropostaService.Domain.Entities;
 using PropostaService.Domain.Enums;
 
-namespace PropostaService.Domain.Ports;
+namespace PropostaService.Domain.Ports.Output;
 
 public interface IPropostaRepository
 {

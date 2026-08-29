@@ -1,6 +1,6 @@
-using PropostaService.Domain.Enums;
+﻿using PropostaService.Domain.Enums;
 
-namespace PropostaService.Domain.Ports;
+namespace PropostaService.Domain.Ports.Output;
 
 public interface IRegraSeguro
 {

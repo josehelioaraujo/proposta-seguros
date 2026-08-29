@@ -3,6 +3,7 @@ using Moq;
 using ContratacaoService.Application.UseCases.ContratarProposta;
 using ContratacaoService.Domain.Entities;
 using ContratacaoService.Domain.Ports.Output;
+using Microsoft.Extensions.Logging;
 using ContratacaoService.Domain.Shared;
 using ContratacaoService.Tests.Mocks;
 
@@ -11,6 +12,7 @@ namespace ContratacaoService.Tests.UseCases;
 public class ContratarPropostaUseCaseTests
 {
     private readonly Mock<IContratacaoRepository> _repositoryMock;
+    private readonly Mock<ILogger<ContratarPropostaUseCase>> _loggerMock;
     private readonly Mock<IPropostaServiceClient> _clientMock;
     private readonly ContratarPropostaUseCase     _useCase;
     private readonly ContratarPropostaRequestFaker _faker;
@@ -18,12 +20,14 @@ public class ContratarPropostaUseCaseTests
     public ContratarPropostaUseCaseTests()
     {
         _repositoryMock = new Mock<IContratacaoRepository>();
+        _loggerMock     = new Mock<ILogger<ContratarPropostaUseCase>>();
         _clientMock     = new Mock<IPropostaServiceClient>();
         _faker          = new ContratarPropostaRequestFaker();
 
         _useCase = new ContratarPropostaUseCase(
             _repositoryMock.Object,
-            _clientMock.Object);
+            _clientMock.Object,
+            _loggerMock.Object);
     }
 
     [Fact]
@@ -148,3 +152,4 @@ public class ContratarPropostaUseCaseTests
         result.Status.Should().Be(ResultStatus.UnprocessableEntity);
     }
 }
+

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PropostaService.Application.UseCases.AlterarStatus;
 using PropostaService.Application.UseCases.CriarProposta;
 using PropostaService.Application.UseCases.ListarPropostas;
@@ -54,9 +54,9 @@ public class PropostasController : ControllerBase
 
     /// <summary>Altera o status de uma proposta</summary>
     [HttpPatch("{id:guid}/status")]
-    public async Task<IActionResult> AlterarStatus(Guid id, [FromBody] AlterarStatusRequest request)
+    public async Task<IActionResult> AlterarStatus(Guid id, [FromBody] AlterarStatusBodyRequest request)
     {
-        var requestComId = request with { Id = id };
+        var requestComId = new AlterarStatusRequest(id, request.NovoStatus);
         var result       = await _alterarStatus.ExecuteAsync(requestComId);
         return result.ToActionResult();
     }
