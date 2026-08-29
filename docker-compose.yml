@@ -1,4 +1,4 @@
-services:
+﻿services:
 
   postgres:
     image: postgres:16-alpine
@@ -36,7 +36,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5001/health/live || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5001/health/live || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,7 +64,7 @@ services:
       proposta-api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5002/health/live || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5002/health/live || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
