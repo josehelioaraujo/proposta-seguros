@@ -30,11 +30,17 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=seguros_db;Username=postgres;Password=postgres"
-      Features__UsarBancoDados: "true"
-      Features__UsarRabbitMQ:   "false"
+      Features__UsarBancoDados: ${USAR_BANCO_DADOS:-false}
+      Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5001/health/live || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - seguros-network
     restart: unless-stopped
@@ -49,14 +55,20 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=seguros_db;Username=postgres;Password=postgres"
-      Features__UsarBancoDados: "true"
-      Features__UsarRabbitMQ:   "false"
+      Features__UsarBancoDados: ${USAR_BANCO_DADOS:-false}
+      Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
       Services__PropostaService: "http://proposta-api:5001"
     depends_on:
       postgres:
         condition: service_healthy
       proposta-api:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5002/health/live || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - seguros-network
     restart: unless-stopped
@@ -70,6 +82,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - seguros-network
     profiles:
