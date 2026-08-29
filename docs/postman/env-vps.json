@@ -1,12 +1,16 @@
 {
-  "id": "env-vps-001",
+  "id": "env-vps-002",
   "name": "VPS Hostinger",
   "values": [
     { "key": "base_proposta",    "value": "http://2.25.122.11:5001", "enabled": true },
     { "key": "base_contratacao", "value": "http://2.25.122.11:5002", "enabled": true },
     { "key": "proposta_id",      "value": "",                        "enabled": true },
     { "key": "contratacao_id",   "value": "",                        "enabled": true },
-    { "key": "cpf",              "value": "529.982.247-25",          "enabled": true }
+    { "key": "cpf",              "value": "529.982.247-25",          "enabled": true },
+    { "key": "rand_nome",        "value": "",                        "enabled": true },
+    { "key": "rand_cpf",         "value": "",                        "enabled": true },
+    { "key": "rand_tipo",        "value": "",                        "enabled": true },
+    { "key": "rand_valor",       "value": "",                        "enabled": true }
   ],
   "_postman_variable_scope": "environment"
 }
