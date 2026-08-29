@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using ContratacaoService.Domain.Ports.Output;
 using ContratacaoService.Infrastructure.Adapters.Output.Database;
@@ -47,8 +48,23 @@ public static class InfrastructureExtensions
                 .Get<RabbitMqSettings>() ?? new RabbitMqSettings();
 
             services.AddSingleton(settings);
-            services.AddSingleton<IEventPublisher>(_ =>
-                RabbitMqEventPublisher.CreateAsync(settings).GetAwaiter().GetResult());
+
+            // Registra com tratamento de erro  RabbitMQ indisponivel nao derruba a API
+            services.AddSingleton<IEventPublisher>(sp =>
+            {
+                try
+                {
+                    return RabbitMqEventPublisher.CreateAsync(settings).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    var logger = sp.GetRequiredService<ILogger<RabbitMqEventPublisher>>();
+                    logger.LogWarning(
+                        "RabbitMQ indisponivel  publicacao de eventos desabilitada. Erro: {Erro}",
+                        ex.Message);
+                    return new NullEventPublisher();
+                }
+            });
         }
 
         return services;
