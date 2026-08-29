@@ -1,4 +1,4 @@
-using PropostaService.Domain.Enums;
+﻿using PropostaService.Domain.Enums;
 using PropostaService.Domain.ValueObjects;
 
 namespace PropostaService.Domain.Entities;
@@ -14,10 +14,10 @@ public class Proposta
     public DateTime       CriadoEm   { get; private set; }
     public DateTime?      AtualizadoEm { get; private set; }
 
-    // Construtor privado — EF/Dapper
+    // Construtor privado â€” EF/Dapper
     private Proposta() { }
 
-    // Factory method — unica forma de criar uma proposta valida
+    // Factory method â€” unica forma de criar uma proposta valida
     public static Proposta Criar(
         string    nomeCliente,
         string    cpf,
@@ -36,7 +36,7 @@ public class Proposta
         };
     }
 
-    // Comportamento encapsulado — status so muda aqui
+    // Comportamento encapsulado â€” status so muda aqui
     public void AlterarStatus(PropostaStatus novoStatus)
     {
         if (Status == PropostaStatus.Aprovada || Status == PropostaStatus.Rejeitada)
@@ -46,8 +46,32 @@ public class Proposta
         Status       = novoStatus;
         AtualizadoEm = DateTime.UtcNow;
     }
+    // Reconstituicao — usado pelo Dapper para mapear do banco
+    public static Proposta Reconstituir(
+        Guid           id,
+        string         nomeCliente,
+        string         cpf,
+        TipoSeguro     tipoSeguro,
+        decimal        valor,
+        PropostaStatus status,
+        DateTime       criadoEm,
+        DateTime?      atualizadoEm)
+    {
+        return new Proposta
+        {
+            Id           = id,
+            NomeCliente  = nomeCliente,
+            Cpf          = cpf,
+            TipoSeguro   = tipoSeguro,
+            Valor        = valor,
+            Status       = status,
+            CriadoEm    = criadoEm,
+            AtualizadoEm = atualizadoEm
+        };
+    }
 
     public bool StatusFinal =>
         Status == PropostaStatus.Aprovada ||
         Status == PropostaStatus.Rejeitada;
 }
+
