@@ -1,0 +1,12 @@
+{
+  "id": "env-local-001",
+  "name": "Local",
+  "values": [
+    { "key": "base_proposta",    "value": "http://localhost:5001", "enabled": true },
+    { "key": "base_contratacao", "value": "http://localhost:5002", "enabled": true },
+    { "key": "proposta_id",      "value": "",                      "enabled": true },
+    { "key": "contratacao_id",   "value": "",                      "enabled": true },
+    { "key": "cpf",              "value": "529.982.247-25",        "enabled": true }
+  ],
+  "_postman_variable_scope": "environment"
+}

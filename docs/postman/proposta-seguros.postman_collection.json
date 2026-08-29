@@ -1,0 +1,402 @@
+{
+  "info": {
+    "name": "Proposta de Seguros — VPS",
+    "description": "Collection completa para testar o Sistema de Proposta de Seguros na VPS\n\n## Fluxo completo\n1. Criar proposta\n2. Aprovar proposta\n3. Contratar proposta\n4. Verificar contratação\n5. Testar health checks\n\n## Tipos de Seguro BMG\n| Código | Tipo | Valor Mínimo |\n|--------|------|--------------|\n| 1 | SeguroFGTSProtegido | R$ 50,00 |\n| 2 | SeguroVidaFamiliar | R$ 30,00 |\n| 3 | SeguroCartaoProtegido | R$ 15,00 |\n| 4 | ProtecaoCreditoTrabalhador | R$ 25,00 |\n| 5 | SeguroContaCelularProtegidos | R$ 10,00 |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_proposta",    "value": "http://2.25.122.11:5001" },
+    { "key": "base_contratacao", "value": "http://2.25.122.11:5002" },
+    { "key": "proposta_id",      "value": "" },
+    { "key": "contratacao_id",   "value": "" },
+    { "key": "cpf",              "value": "529.982.247-25" }
+  ],
+  "item": [
+    {
+      "name": "01 — Health Checks",
+      "item": [
+        {
+          "name": "01.1 Health — PropostaService",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('API Healthy', () => { const b = pm.response.json(); pm.expect(b.status).to.eql('Healthy'); });"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{base_proposta}}/health", "host": ["{{base_proposta}}"], "path": ["health"] }}
+        },
+        {
+          "name": "01.2 Health Live — PropostaService",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Liveness OK', () => { const b = pm.response.json(); pm.expect(b.status).to.eql('Healthy'); });"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{base_proposta}}/health/live", "host": ["{{base_proposta}}"], "path": ["health", "live"] }}
+        },
+        {
+          "name": "01.3 Health Ready — PropostaService",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Readiness OK', () => { const b = pm.response.json(); pm.expect(b.status).to.eql('Healthy'); });"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{base_proposta}}/health/ready", "host": ["{{base_proposta}}"], "path": ["health", "ready"] }}
+        },
+        {
+          "name": "01.4 Health — ContratacaoService",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('API Healthy', () => { const b = pm.response.json(); pm.expect(b.status).to.eql('Healthy'); });"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{base_contratacao}}/health", "host": ["{{base_contratacao}}"], "path": ["health"] }}
+        },
+        {
+          "name": "01.5 Health Live — ContratacaoService",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{base_contratacao}}/health/live", "host": ["{{base_contratacao}}"], "path": ["health", "live"] }}
+        },
+        {
+          "name": "01.6 Health Ready — ContratacaoService",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{base_contratacao}}/health/ready", "host": ["{{base_contratacao}}"], "path": ["health", "ready"] }}
+        }
+      ]
+    },
+    {
+      "name": "02 — PropostaService",
+      "item": [
+        {
+          "name": "02.1 Criar Proposta — FGTS Protegido (tipo 1)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+            "pm.test('Proposta criada com status EmAnalise', () => {",
+            "    const b = pm.response.json();",
+            "    pm.expect(b.id).to.be.a('string');",
+            "    pm.expect(b.status).to.eql('EmAnalise');",
+            "    pm.expect(b.tipoSeguro).to.eql('SeguroFGTSProtegido');",
+            "    pm.collectionVariables.set('proposta_id', b.id);",
+            "    pm.collectionVariables.set('cpf', b.cpf);",
+            "    console.log('proposta_id:', b.id);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"João Silva Santos\",\n  \"cpf\": \"529.982.247-25\",\n  \"tipoSeguro\": 1,\n  \"valor\": 150.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] },
+            "description": "Cria proposta de Seguro FGTS Protegido\nCPF válido: 529.982.247-25\nValor mínimo: R$ 50,00"
+          }
+        },
+        {
+          "name": "02.2 Criar Proposta — Vida Familiar (tipo 2)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+            "pm.test('Tipo correto', () => { pm.expect(pm.response.json().tipoSeguro).to.eql('SeguroVidaFamiliar'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"Maria Oliveira Costa\",\n  \"cpf\": \"634.123.987-09\",\n  \"tipoSeguro\": 2,\n  \"valor\": 80.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] }
+          }
+        },
+        {
+          "name": "02.3 Criar Proposta — Cartao Protegido (tipo 3)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"Carlos Eduardo Mendes\",\n  \"cpf\": \"987.654.321-00\",\n  \"tipoSeguro\": 3,\n  \"valor\": 25.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] }
+          }
+        },
+        {
+          "name": "02.4 Criar Proposta — Protecao Credito (tipo 4)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"Ana Paula Ferreira\",\n  \"cpf\": \"111.444.777-35\",\n  \"tipoSeguro\": 4,\n  \"valor\": 45.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] }
+          }
+        },
+        {
+          "name": "02.5 Criar Proposta — Conta e Celular (tipo 5)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 Created', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"Pedro Henrique Lima\",\n  \"cpf\": \"222.555.888-46\",\n  \"tipoSeguro\": 5,\n  \"valor\": 15.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] }
+          }
+        },
+        {
+          "name": "02.6 Criar Proposta — Valor abaixo do minimo (422)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 422 Unprocessable', () => pm.response.to.have.status(422));",
+            "pm.test('Retorna erro de valor minimo', () => { pm.expect(pm.response.json().error).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"Teste Valor Minimo\",\n  \"cpf\": \"333.666.999-57\",\n  \"tipoSeguro\": 1,\n  \"valor\": 10.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] },
+            "description": "Testa validacao de valor minimo\nFGTS Protegido exige minimo R$ 50,00\nEnviando R$ 10,00 deve retornar 422"
+          }
+        },
+        {
+          "name": "02.7 Criar Proposta — Duplicada mesmo CPF e tipo (409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
+            "pm.test('Retorna erro de idempotencia', () => { pm.expect(pm.response.json().error).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"João Silva Santos\",\n  \"cpf\": \"529.982.247-25\",\n  \"tipoSeguro\": 1,\n  \"valor\": 200.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] },
+            "description": "Testa idempotencia\nMesmo CPF + mesmo tipo com status EmAnalise\nDeve retornar 409 Conflict"
+          }
+        },
+        {
+          "name": "02.8 Listar Propostas",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna array', () => { pm.expect(pm.response.json()).to.be.an('array'); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] }
+          }
+        },
+        {
+          "name": "02.9 Obter Proposta por ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna proposta correta', () => {",
+            "    const b = pm.response.json();",
+            "    pm.expect(b.id).to.eql(pm.collectionVariables.get('proposta_id'));",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_proposta}}/api/Propostas/{{proposta_id}}", "host": ["{{base_proposta}}"], "path": ["api", "Propostas", "{{proposta_id}}"] }
+          }
+        },
+        {
+          "name": "02.10 Obter Proposta — ID inexistente (404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_proposta}}/api/Propostas/00000000-0000-0000-0000-000000000000", "host": ["{{base_proposta}}"], "path": ["api", "Propostas", "00000000-0000-0000-0000-000000000000"] }
+          }
+        },
+        {
+          "name": "02.11 Alterar Status — Aprovada",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Status alterado para Aprovada', () => {",
+            "    pm.expect(pm.response.json().status).to.eql('Aprovada');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"novoStatus\": 2\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas/{{proposta_id}}/status", "host": ["{{base_proposta}}"], "path": ["api", "Propostas", "{{proposta_id}}", "status"] },
+            "description": "Status:\n1 = EmAnalise\n2 = Aprovada\n3 = Rejeitada"
+          }
+        },
+        {
+          "name": "02.12 Alterar Status — Ja Aprovada (422)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 422 Unprocessable', () => pm.response.to.have.status(422));",
+            "pm.test('Retorna erro de status final', () => { pm.expect(pm.response.json().error).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"novoStatus\": 3\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas/{{proposta_id}}/status", "host": ["{{base_proposta}}"], "path": ["api", "Propostas", "{{proposta_id}}", "status"] },
+            "description": "Proposta Aprovada nao pode ser alterada\nDeve retornar 422"
+          }
+        },
+        {
+          "name": "02.13 Alterar Status — Rejeitada",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Status Rejeitada', () => { pm.expect(pm.response.json().status).to.eql('Rejeitada'); });"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"novoStatus\": 3\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas/{{proposta_id_rejeitada}}/status", "host": ["{{base_proposta}}"], "path": ["api", "Propostas", "{{proposta_id_rejeitada}}", "status"] },
+            "description": "Use com uma proposta em EmAnalise diferente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — ContratacaoService",
+      "item": [
+        {
+          "name": "03.1 Contratar Proposta — Sucesso",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+            "pm.test('Contratacao criada', () => {",
+            "    const b = pm.response.json();",
+            "    pm.expect(b.id).to.be.a('string');",
+            "    pm.expect(b.propostaId).to.eql(pm.collectionVariables.get('proposta_id'));",
+            "    pm.collectionVariables.set('contratacao_id', b.id);",
+            "    console.log('contratacao_id:', b.id);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"propostaId\": \"{{proposta_id}}\",\n  \"cpf\": \"{{cpf}}\"\n}" },
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes"] },
+            "description": "Execute 02.11 antes para aprovar a proposta"
+          }
+        },
+        {
+          "name": "03.2 Contratar Proposta — Ja contratada (409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
+            "pm.test('Erro de idempotencia', () => { pm.expect(pm.response.json().error).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"propostaId\": \"{{proposta_id}}\",\n  \"cpf\": \"{{cpf}}\"\n}" },
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes"] }
+          }
+        },
+        {
+          "name": "03.3 Contratar Proposta — Nao aprovada (422)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 422 ou 404', () => {",
+            "    pm.expect(pm.response.code).to.be.oneOf([404, 422]);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"propostaId\": \"00000000-0000-0000-0000-000000000001\",\n  \"cpf\": \"529.982.247-25\"\n}" },
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes"] }
+          }
+        },
+        {
+          "name": "03.4 Obter Contratacao por ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Contratacao correta', () => {",
+            "    const b = pm.response.json();",
+            "    pm.expect(b.id).to.eql(pm.collectionVariables.get('contratacao_id'));",
+            "    pm.expect(b.propostaId).to.eql(pm.collectionVariables.get('proposta_id'));",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes/{{contratacao_id}}", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes", "{{contratacao_id}}"] }
+          }
+        },
+        {
+          "name": "03.5 Obter Contratacao — ID inexistente (404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes/00000000-0000-0000-0000-000000000000", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes", "00000000-0000-0000-0000-000000000000"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 — Fluxo Completo",
+      "description": "Execute em ordem para testar o fluxo end-to-end completo",
+      "item": [
+        {
+          "name": "04.1 Criar Proposta FGTS",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const b = pm.response.json();",
+            "pm.collectionVariables.set('proposta_id', b.id);",
+            "pm.collectionVariables.set('cpf', b.cpf);",
+            "console.log('Proposta criada:', b.id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nomeCliente\": \"Roberto Carlos Souza\",\n  \"cpf\": \"529.982.247-25\",\n  \"tipoSeguro\": 1,\n  \"valor\": 250.00\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas", "host": ["{{base_proposta}}"], "path": ["api", "Propostas"] }
+          }
+        },
+        {
+          "name": "04.2 Aprovar Proposta",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Aprovada', () => { pm.expect(pm.response.json().status).to.eql('Aprovada'); });"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"novoStatus\": 2\n}" },
+            "url": { "raw": "{{base_proposta}}/api/Propostas/{{proposta_id}}/status", "host": ["{{base_proposta}}"], "path": ["api", "Propostas", "{{proposta_id}}", "status"] }
+          }
+        },
+        {
+          "name": "04.3 Contratar Proposta",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const b = pm.response.json();",
+            "pm.collectionVariables.set('contratacao_id', b.id);",
+            "console.log('Contratacao criada:', b.id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"propostaId\": \"{{proposta_id}}\",\n  \"cpf\": \"{{cpf}}\"\n}" },
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes"] }
+          }
+        },
+        {
+          "name": "04.4 Verificar Contratacao",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Contratacao completa', () => {",
+            "    const b = pm.response.json();",
+            "    pm.expect(b.propostaId).to.eql(pm.collectionVariables.get('proposta_id'));",
+            "    console.log('Contratacao verificada com sucesso!');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_contratacao}}/api/Contratacoes/{{contratacao_id}}", "host": ["{{base_contratacao}}"], "path": ["api", "Contratacoes", "{{contratacao_id}}"] }
+          }
+        },
+        {
+          "name": "04.5 Verificar Health Geral",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('PropostaService Healthy', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_proposta}}/health", "host": ["{{base_proposta}}"], "path": ["health"] }
+          }
+        }
+      ]
+    }
+  ]
+}
