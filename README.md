@@ -3,7 +3,10 @@
 [![CI/CD](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
-[![Evidências E2E](https://img.shields.io/badge/Testes%20E2E-Postman%20%7C%20Newman-orange)](https://josehelioaraujo.github.io/proposta-seguros)
+[![Evidências E2E](https://img.shields.io/badge/Testes%20E2E-Postman%20%7C%20Newman-orange)](https://josehelioaraujo.github.io/proposta-seguros/)
+
+> 📊 **[Ver Relatório de Testes E2E ao vivo →](https://josehelioaraujo.github.io/proposta-seguros/)**  
+> Gerado automaticamente após cada deploy via Newman + GitHub Pages.
 
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
@@ -236,6 +239,14 @@ dotnet run
 
 ---
 
+## Documentação
+
+- [Enunciado do Projeto](docs/enunciado.md)
+- [Postman Collection](docs/postman/)
+- [Migrations SQL](migrations/)
+
+---
+
 ## Endpoints
 
 ### PropostaService
@@ -264,7 +275,9 @@ dotnet run
 
 ---
 
-## Migrations SQL
+
+<details>
+<summary><strong>Migrations SQL</strong></summary>
 
 As migrations criam os schemas e tabelas no PostgreSQL.
 
@@ -295,6 +308,8 @@ seguros_db
         ├── id, proposta_id
         ├── cpf, data_contratacao
 ```
+
+</details>
 
 ---
 
@@ -344,7 +359,9 @@ Canto superior direito do Postman:
 
 ---
 
-## Simulação Completa de Testes
+
+<details>
+<summary><strong>Simulação Completa de Testes</strong></summary>
 
 ### Cenário 1 — InMemory
 
@@ -411,6 +428,8 @@ URL:     http://2.25.122.11:15672
 Usuário: guest / Senha: guest
 Fila:    proposta.contratada.queue
 ```
+
+</details>
 
 ---
 
@@ -502,25 +521,29 @@ PropostaService:    http://2.25.122.11:5001
 ContratacaoService: http://2.25.122.11:5002
 ```
 
-### Testes E2E Automatizados — Newman + GitHub Pages
+### Smoke Tests E2E — Newman + GitHub Pages
 
-Não solicitado no enunciado. A collection Postman é executada automaticamente via **Newman** após cada deploy na VPS, gerando um relatório HTML publicado no GitHub Pages.
+Não solicitado no enunciado. Após cada deploy na VPS, a collection Postman é executada automaticamente via **Newman** (CLI oficial do Postman), validando o sistema em ambiente real de produção.
 
 ```
-Deploy VPS → Newman (Postman CLI) → GitHub Pages
+Deploy VPS → Health Check (aguarda VPS pronta) → Newman → GitHub Pages
 ```
 
-O relatório é atualizado a cada push e fica disponível publicamente:
+O relatório HTML é publicado automaticamente e fica disponível em URL fixa:
 
-**[📊 Ver Relatório de Testes E2E](https://josehelioaraujo.github.io/proposta-seguros)**
+**[📊 Ver Relatório de Testes E2E →](https://josehelioaraujo.github.io/proposta-seguros/)**
 
-Cenários executados automaticamente (Fluxo 07 — PostgreSQL + RabbitMQ):
-- Health Checks dos dois serviços
-- Criar proposta com CPF válido gerado automaticamente
-- Aprovar proposta
-- Contratar proposta aprovada
-- Verificar evento publicado na fila RabbitMQ
-- Verificar persistência no PostgreSQL via Adminer
+**Cenários executados — Fluxo 07 (PostgreSQL + RabbitMQ):**
+
+| # | Cenário | Validações |
+|---|---------|-----------|
+| 07.1 | Criar Proposta | Status 201, ID retornado, CPF válido gerado automaticamente |
+| 07.2 | Aprovar Proposta | Status 200, status da proposta = `Aprovada` |
+| 07.3 | Contratar Proposta | Status 201, contratação criada com sucesso |
+| 07.4 | Verificar Contratação | Status 200, dados persistidos no PostgreSQL |
+| 07.5 | Health Check Completo | Status 200, postgres + rabbitmq = `Healthy` |
+
+**Resultado:** 5 requests · 9 assertions · 0 falhas · ambiente real de produção (VPS Hostinger)
 
 ### Pipeline de CI/CD
 
@@ -588,15 +611,9 @@ Os testes são controlados pela variável `RUN_INTEGRATION_TESTS`:
 
 ---
 
-## Documentação
 
-- [Enunciado do Projeto](docs/enunciado.md)
-- [Postman Collection](docs/postman/)
-- [Migrations SQL](migrations/)
-
----
-
-## Containers Docker
+<details>
+<summary><strong>Containers Docker</strong></summary>
 
 | Container | Imagem | Porta | Descrição |
 |-----------|--------|-------|-----------|
@@ -624,9 +641,13 @@ seguros-rabbitmq
 └── usuário: guest / senha: guest
 ```
 
+</details>
+
 ---
 
-## Scripts de Operação
+
+<details>
+<summary><strong>Scripts de Operação</strong></summary>
 
 Todos os scripts ficam na pasta `scripts/` e devem ser executados
 a partir da raiz do projeto na VPS.
@@ -695,9 +716,13 @@ USAR_RABBITMQ=false
 
 Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente.
 
+</details>
+
 ---
 
-## Mensageria — Produtor e Consumidores
+
+<details>
+<summary><strong>Mensageria — Produtor e Consumidores</strong></summary>
 
 Nossa aplicação atua apenas como **produtora** de eventos. O ContratacaoService
 publica o evento `PropostaContratadaEvent` na fila após cada contratação
@@ -767,9 +792,13 @@ Queues and Streams
 As mensagens ficam acumuladas pois não há consumidores implementados
 neste projeto — em produção real seriam processadas imediatamente.
 
+</details>
+
 ---
 
-## Painéis Administrativos
+
+<details>
+<summary><strong>Painéis Administrativos</strong></summary>
 
 ### Adminer — PostgreSQL
 
@@ -840,3 +869,5 @@ Conteúdo esperado:
   "OcorridoEm":      "2026-08-30T00:54:47"
 }
 ```
+
+</details>
