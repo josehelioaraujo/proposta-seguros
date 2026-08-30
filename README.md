@@ -1,13 +1,13 @@
-﻿# Proposta de Seguros
+# Proposta de Seguros
 
-Sistema de gerenciamento de propostas de seguro desenvolvido como teste tÃ©cnico,
+Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
 
-## VisÃ£o Geral
+## Visão Geral
 
-O sistema Ã© composto por dois microserviÃ§os independentes:
+O sistema é composto por dois microserviços independentes:
 
-| ServiÃ§o | Responsabilidade | Porta |
+| Serviço | Responsabilidade | Porta |
 |---|---|---|
 | **PropostaService** | Criar e gerenciar propostas de seguro | 5001 |
 | **ContratacaoService** | Contratar propostas aprovadas e publicar eventos | 5002 |
@@ -55,7 +55,7 @@ flowchart TD
 
 - .NET 10 / C#
 - PostgreSQL 16 + Dapper
-- RabbitMQ 4 (mensageria â€” bonus)
+- RabbitMQ 4 (mensageria — bonus)
 - FluentValidation
 - xUnit / Moq / Bogus / FluentAssertions
 - Docker / Docker Compose
@@ -78,7 +78,7 @@ flowchart TD
 
 ## Como Executar
 
-### Opcao 1 â€” Docker na VPS (recomendado)
+### Opcao 1 — Docker na VPS (recomendado)
 
 ```bash
 ssh root@2.25.122.11
@@ -86,7 +86,7 @@ cd /home/projetos/proposta-seguros
 ./scripts/apply.sh
 ```
 
-### Opcao 2 â€” Docker local
+### Opcao 2 — Docker local
 
 ```bash
 git clone https://github.com/josehelioaraujo/proposta-seguros.git
@@ -95,14 +95,14 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-### Opcao 3 â€” Local sem Docker
+### Opcao 3 — Local sem Docker
 
 ```bash
-# Terminal 1 â€” PropostaService
+# Terminal 1 — PropostaService
 cd src/PropostaService/PropostaService.Api
 dotnet run
 
-# Terminal 2 â€” ContratacaoService
+# Terminal 2 — ContratacaoService
 cd src/ContratacaoService/ContratacaoService.Api
 dotnet run
 ```
@@ -115,17 +115,17 @@ dotnet run
 
 | Servico | URL |
 |---|---|
-| PropostaService â€” Swagger | http://2.25.122.11:5001 |
-| ContratacaoService â€” Swagger | http://2.25.122.11:5002 |
-| RabbitMQ â€” Painel | http://2.25.122.11:15672 |
+| PropostaService — Swagger | http://2.25.122.11:5001 |
+| ContratacaoService — Swagger | http://2.25.122.11:5002 |
+| RabbitMQ — Painel | http://2.25.122.11:15672 |
 
 ### Local
 
 | Servico | URL |
 |---|---|
-| PropostaService â€” Swagger | http://localhost:5001 |
-| ContratacaoService â€” Swagger | http://localhost:5002 |
-| RabbitMQ â€” Painel | http://localhost:15672 |
+| PropostaService — Swagger | http://localhost:5001 |
+| ContratacaoService — Swagger | http://localhost:5002 |
+| RabbitMQ — Painel | http://localhost:15672 |
 
 ---
 
@@ -166,27 +166,26 @@ As migrations criam os schemas e tabelas no PostgreSQL.
 ```bash
 cd /home/projetos/proposta-seguros
 
-# Aplica todas as migrations em ordem
-for f in migrations/V*.sql; do
-    echo "Aplicando $f..."
-    docker exec -i seguros-postgres psql -U postgres -d seguros_db < $f
-done
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001__create_schema_proposta.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
 ```
 
 ### Estrutura criada
 
 ```
 seguros_db
-â”œâ”€â”€ schema: proposta
-â”‚   â””â”€â”€ tabela: propostas
-â”‚       â”œâ”€â”€ id, nome_cliente, cpf
-â”‚       â”œâ”€â”€ tipo_seguro, valor, status
-â”‚       â””â”€â”€ criado_em, atualizado_em
-â”‚
-â””â”€â”€ schema: contratacao
-    â””â”€â”€ tabela: contratacoes
-        â”œâ”€â”€ id, proposta_id
-        â”œâ”€â”€ cpf, data_contratacao
+├── schema: proposta
+│   └── tabela: propostas
+│       ├── id, nome_cliente, cpf
+│       ├── tipo_seguro, valor, status
+│       └── criado_em, atualizado_em
+│
+└── schema: contratacao
+    └── tabela: contratacoes
+        ├── id, proposta_id
+        ├── cpf, data_contratacao
 ```
 
 ---
@@ -210,36 +209,36 @@ total: 13 | falhou: 0 | bem-sucedido: 13
 
 ```
 Postman -> Import -> seleciona os 3 arquivos da pasta docs/postman/:
-â”œâ”€â”€ proposta-seguros.postman_collection.json
-â”œâ”€â”€ env-local.json
-â””â”€â”€ env-vps.json
+├── proposta-seguros.postman_collection.json
+├── env-local.json
+└── env-vps.json
 ```
 
 ### 2. Selecionar o ambiente
 
 ```
 Canto superior direito do Postman:
-â”œâ”€â”€ "Local"          -> http://localhost:500x
-â””â”€â”€ "VPS Hostinger"  -> http://2.25.122.11:500x
+├── "Local"          -> http://localhost:500x
+└── "VPS Hostinger"  -> http://2.25.122.11:500x
 ```
 
 ### 3. Estrutura da Collection
 
 | Pasta | Descricao |
 |-------|-----------|
-| 01 â€” Health Checks | Verifica saude dos dois servicos |
-| 02 â€” PropostaService | Todos os cenarios de proposta |
-| 03 â€” ContratacaoService | Todos os cenarios de contratacao |
-| 04 â€” Fluxo Completo | Fluxo end-to-end com dados fixos |
-| 05 â€” Fluxo VPS InMemory | Dados aleatorios â€” sem banco |
-| 06 â€” Fluxo VPS PostgreSQL | Dados aleatorios â€” com banco |
-| 07 â€” Fluxo VPS PostgreSQL + RabbitMQ | Dados aleatorios â€” banco + fila |
+| 01 — Health Checks | Verifica saude dos dois servicos |
+| 02 — PropostaService | Todos os cenarios de proposta |
+| 03 — ContratacaoService | Todos os cenarios de contratacao |
+| 04 — Fluxo Completo | Fluxo end-to-end com dados fixos |
+| 05 — Fluxo VPS InMemory | Dados aleatorios — sem banco |
+| 06 — Fluxo VPS PostgreSQL | Dados aleatorios — com banco |
+| 07 — Fluxo VPS PostgreSQL + RabbitMQ | Dados aleatorios — banco + fila |
 
 ---
 
 ## Simulacao Completa de Testes
 
-### Cenario 1 â€” InMemory
+### Cenario 1 — InMemory
 
 ```bash
 # Na VPS
@@ -248,7 +247,7 @@ Canto superior direito do Postman:
 
 ```
 Postman: ambiente "VPS Hostinger"
-Pasta:   "05 â€” Fluxo VPS InMemory"
+Pasta:   "05 — Fluxo VPS InMemory"
 Acao:    Run folder -> Start run
 
 Resultado esperado:
@@ -257,15 +256,14 @@ Resultado esperado:
 - Fluxo: criar -> aprovar -> contratar -> verificar
 ```
 
-### Cenario 2 â€” PostgreSQL
+### Cenario 2 — PostgreSQL
 
 ```bash
 # Aplica migrations
-# Aplica todas as migrations em ordem
-for f in migrations/V*.sql; do
-    echo "Aplicando $f..."
-    docker exec -i seguros-postgres psql -U postgres -d seguros_db < $f
-done
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001__create_schema_proposta.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
 
 # Liga PostgreSQL
 ./scripts/set-banco.sh --enable
@@ -273,7 +271,7 @@ done
 
 ```
 Postman: ambiente "VPS Hostinger"
-Pasta:   "06 â€” Fluxo VPS PostgreSQL"
+Pasta:   "06 — Fluxo VPS PostgreSQL"
 Acao:    Run folder -> Start run
 
 Resultado esperado:
@@ -282,7 +280,7 @@ Resultado esperado:
 - Health check mostra postgres: Healthy
 ```
 
-### Cenario 3 â€” PostgreSQL + RabbitMQ
+### Cenario 3 — PostgreSQL + RabbitMQ
 
 ```bash
 # Liga RabbitMQ
@@ -291,7 +289,7 @@ Resultado esperado:
 
 ```
 Postman: ambiente "VPS Hostinger"
-Pasta:   "07 â€” Fluxo VPS PostgreSQL + RabbitMQ"
+Pasta:   "07 — Fluxo VPS PostgreSQL + RabbitMQ"
 Acao:    Run folder -> Start run
 
 Resultado esperado:
@@ -335,10 +333,10 @@ Fila:    proposta.contratada.queue
 
 Os itens abaixo nao foram solicitados no enunciado. Foram implementados como
 demonstracao de boas praticas e conhecimento tecnico adicional. Para nao impactar
-o fluxo principal, cada funcionalidade bonus e controlada por feature flags â€”
+o fluxo principal, cada funcionalidade bonus e controlada por feature flags —
 desabilitadas por padrao e habilitadas sob demanda.
 
-### RabbitMQ â€” Mensageria
+### RabbitMQ — Mensageria
 
 O enunciado menciona mensageria como item opcional. O ContratacaoService publica
 o evento PropostaContratadaEvent apos cada contratacao bem-sucedida.
@@ -357,7 +355,7 @@ Consumidores em producao real:
 
 Feature flag: Features:UsarRabbitMQ
 
-### Health Checks â€” ASP.NET Nativo
+### Health Checks — ASP.NET Nativo
 
 Implementados usando o sistema nativo do ASP.NET Core sem bibliotecas externas,
 com tres niveis de verificacao por servico.
@@ -372,8 +370,8 @@ ContratacaoService -> self + postgres + proposta-service + rabbitmq
 O sistema opera em dois modos sem alteracao de codigo:
 
 ```
-UsarBancoDados: false -> InMemory (List<T>) â€” desenvolvimento
-UsarBancoDados: true  -> PostgreSQL via Dapper â€” producao
+UsarBancoDados: false -> InMemory (List<T>) — desenvolvimento
+UsarBancoDados: true  -> PostgreSQL via Dapper — producao
 ```
 
 Demonstra o padrao Ports & Adapters na pratica: o mesmo Use Case funciona
@@ -384,7 +382,7 @@ com qualquer repositorio injetado via DI.
 Logging implementado em todos os Use Cases com niveis configurados por ambiente
 via appsettings.json, preparado para integracao futura com Prometheus e Grafana.
 
-### Docker â€” Multi-stage Build
+### Docker — Multi-stage Build
 
 Imagens construidas em duas etapas: SDK para compilar, runtime para executar.
 Resultado: imagem final de aproximadamente 200MB ao inves de 900MB, sem codigo
@@ -408,3 +406,103 @@ ContratacaoService: http://2.25.122.11:5002
 - [Postman Collection](docs/postman/)
 - [Migrations SQL](migrations/)
 
+---
+
+## Containers Docker
+
+| Container | Imagem | Porta | Descricao |
+|-----------|--------|-------|-----------|
+| proposta-api | proposta-seguros-proposta-api | 5001 | API de gerenciamento de propostas de seguro |
+| contratacao-api | proposta-seguros-contratacao-api | 5002 | API de contratacao de propostas aprovadas |
+| seguros-postgres | postgres:16-alpine | 5432 | Banco de dados PostgreSQL compartilhado |
+| seguros-rabbitmq | rabbitmq:4-management-alpine | 5672 / 15672 | Mensageria — sobe apenas com profile rabbitmq |
+
+### Observacoes
+
+```
+proposta-api e contratacao-api
+└── Multi-stage build: sdk:10.0 (build) + aspnet:10.0 (runtime)
+└── Imagem final: ~200MB (sem SDK, sem codigo fonte)
+└── Ambiente: Production
+
+seguros-postgres
+└── Volume persistente: postgres_data
+└── Healthcheck: pg_isready a cada 10s
+└── APIs so sobem apos postgres estar Healthy
+
+seguros-rabbitmq
+└── Sobe apenas quando USAR_RABBITMQ=true
+└── Painel de gerenciamento: http://2.25.122.11:15672
+└── usuario: guest / senha: guest
+```
+
+---
+
+## Scripts de Operacao
+
+Todos os scripts ficam na pasta `scripts/` e devem ser executados
+a partir da raiz do projeto na VPS.
+
+### Gerenciamento de containers
+
+| Script | Descricao |
+|--------|-----------|
+| `./scripts/start.sh` | Inicia os containers |
+| `./scripts/stop.sh` | Para os containers |
+| `./scripts/restart.sh` | Reinicia os containers |
+| `./scripts/status.sh` | Exibe status dos containers e URLs |
+| `./scripts/update.sh` | git pull + rebuild + reinicia |
+
+### Feature flags
+
+| Script | Descricao |
+|--------|-----------|
+| `./scripts/set-banco.sh --enable` | Liga PostgreSQL (Dapper) |
+| `./scripts/set-banco.sh --disable` | Volta para InMemory |
+| `./scripts/set-rabbitmq.sh --enable` | Liga RabbitMQ e sobe o container |
+| `./scripts/set-rabbitmq.sh --disable` | Desliga RabbitMQ |
+| `./scripts/apply.sh` | Aplica as flags do .env e reinicia |
+
+### Logs
+
+| Script | Descricao |
+|--------|-----------|
+| `./scripts/logs.sh --proposta` | Logs do PropostaService em tempo real |
+| `./scripts/logs.sh --contratacao` | Logs do ContratacaoService em tempo real |
+| `./scripts/logs.sh --postgres` | Logs do PostgreSQL em tempo real |
+| `./scripts/logs.sh --all` | Logs de todos os containers |
+
+### Como usar
+
+```bash
+# Conecta na VPS
+ssh root@2.25.122.11
+cd /home/projetos/proposta-seguros
+
+# Verifica status atual
+./scripts/status.sh
+
+# Atualiza para ultima versao
+./scripts/update.sh
+
+# Alterna para PostgreSQL
+./scripts/set-banco.sh --enable
+
+# Acompanha logs em tempo real
+./scripts/logs.sh --proposta
+```
+
+### Arquivo .env
+
+O arquivo `.env` na raiz do projeto persiste as feature flags entre reinicializacoes:
+
+```bash
+# Ver flags atuais
+cat .env
+
+# Conteudo esperado:
+USAR_BANCO_DADOS=false
+USAR_RABBITMQ=false
+```
+
+Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente.
