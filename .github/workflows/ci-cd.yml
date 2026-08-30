@@ -5,11 +5,13 @@ on:
     branches: [ main ]
     paths:
       - 'src/**'
+      - 'tests/**'
       - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'src/**'
+      - 'tests/**'
       - '.github/workflows/**'
 
 jobs:
@@ -37,11 +39,38 @@ jobs:
       - name: Executar testes
         run: dotnet test proposta-seguros.sln --no-build --configuration Release --verbosity normal
 
-  # ─── JOB 2: SonarCloud ───────────────────────────────────────────────────────
+  # ─── JOB 2: Testes de Integração ─────────────────────────────────────────────
+  integration-test:
+    name: Testes de Integração
+    runs-on: ubuntu-latest
+    needs: test
+
+    env:
+      RUN_INTEGRATION_TESTS: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore tests/PropostaService.IntegrationTests/PropostaService.IntegrationTests.csproj
+
+      - name: Build
+        run: dotnet build tests/PropostaService.IntegrationTests/PropostaService.IntegrationTests.csproj --no-restore --configuration Release
+
+      - name: Executar testes de integração
+        run: dotnet test tests/PropostaService.IntegrationTests/PropostaService.IntegrationTests.csproj --no-build --configuration Release --verbosity normal
+
+  # ─── JOB 3: SonarCloud ───────────────────────────────────────────────────────
   sonar:
     name: SonarCloud
     runs-on: ubuntu-latest
-    needs: test
+    needs: integration-test
 
     steps:
       - name: Checkout
@@ -80,11 +109,11 @@ jobs:
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-  # ─── JOB 3: Deploy VPS ───────────────────────────────────────────────────────
+  # ─── JOB 4: Deploy VPS ───────────────────────────────────────────────────────
   deploy:
     name: Deploy VPS
     runs-on: ubuntu-latest
-    needs: [ test, sonar ]
+    needs: [ integration-test, sonar ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
