@@ -177,7 +177,7 @@ jobs:
             BUILD_COMMIT=$(git rev-parse --short HEAD)
             BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-            docker compose build --no-cache \
+            docker compose build \
               --build-arg BUILD_VERSION=$BUILD_VERSION \
               --build-arg BUILD_COMMIT=$BUILD_COMMIT \
               --build-arg BUILD_DATE=$BUILD_DATE
@@ -198,7 +198,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Aguardar VPS estabilizar
-        run: sleep 15
+        run: |
+          echo "Aguardando containers subirem..."
+          sleep 30
+          echo "Verificando health check..."
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://2.25.122.11:5001/health/live || echo "000")
+            echo "Tentativa $i — status: $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "VPS pronta!"
+              break
+            fi
+            sleep 10
+          done
 
       - name: Instalar Newman e reporter HTML
         run: |
