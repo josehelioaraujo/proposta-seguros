@@ -39,7 +39,7 @@ jobs:
       - name: Executar testes
         run: dotnet test proposta-seguros.sln --no-build --configuration Release --verbosity normal
 
-  # ─── JOB 2: Testes de Integração ─────────────────────────────────────────────
+  # ─── JOB 2: Testes de Integração — PropostaService ───────────────────────────
   integration-test:
     name: Testes de Integração
     runs-on: ubuntu-latest
@@ -66,11 +66,38 @@ jobs:
       - name: Executar testes de integração
         run: dotnet test tests/PropostaService.IntegrationTests/PropostaService.IntegrationTests.csproj --no-build --configuration Release --verbosity normal
 
-  # ─── JOB 3: SonarCloud ───────────────────────────────────────────────────────
+  # ─── JOB 3: Testes de Integração — RabbitMQ ──────────────────────────────────
+  integration-test-rabbitmq:
+    name: Testes de Integração RabbitMQ
+    runs-on: ubuntu-latest
+    needs: integration-test
+
+    env:
+      RUN_INTEGRATION_TESTS: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore tests/ContratacaoService.IntegrationTests/ContratacaoService.IntegrationTests.csproj
+
+      - name: Build
+        run: dotnet build tests/ContratacaoService.IntegrationTests/ContratacaoService.IntegrationTests.csproj --no-restore --configuration Release
+
+      - name: Executar testes de integração RabbitMQ
+        run: dotnet test tests/ContratacaoService.IntegrationTests/ContratacaoService.IntegrationTests.csproj --no-build --configuration Release --verbosity normal
+
+  # ─── JOB 4: SonarCloud ───────────────────────────────────────────────────────
   sonar:
     name: SonarCloud
     runs-on: ubuntu-latest
-    needs: integration-test
+    needs: integration-test-rabbitmq
 
     steps:
       - name: Checkout
@@ -109,11 +136,11 @@ jobs:
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-  # ─── JOB 4: Deploy VPS ───────────────────────────────────────────────────────
+  # ─── JOB 5: Deploy VPS ───────────────────────────────────────────────────────
   deploy:
     name: Deploy VPS
     runs-on: ubuntu-latest
-    needs: [ integration-test, sonar ]
+    needs: [ integration-test-rabbitmq, sonar ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -138,4 +165,4 @@ jobs:
 
             docker compose up -d
 
-            echo "✅ Deploy concluído — versão $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
+            echo "Deploy concluido - versao $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
