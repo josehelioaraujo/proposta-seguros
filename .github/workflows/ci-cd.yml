@@ -129,7 +129,8 @@ jobs:
             /o:"josehelioaraujo" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="tests/PropostaService.Tests/coverage.opencover.xml,tests/ContratacaoService.Tests/coverage.opencover.xml"
+            /d:sonar.projectBaseDir="${{ github.workspace }}" \
+            /d:sonar.cs.opencover.reportsPaths="${{ github.workspace }}/tests/PropostaService.Tests/coverage.opencover.xml,${{ github.workspace }}/tests/ContratacaoService.Tests/coverage.opencover.xml"
 
       - name: Build para análise
         run: dotnet build proposta-seguros.sln --no-restore --configuration Release
@@ -141,7 +142,7 @@ jobs:
             --configuration Release \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=./coverage.opencover.xml
+            "/p:CoverletOutput=${{ github.workspace }}/tests/PropostaService.Tests/coverage.opencover.xml"
 
       - name: Executar testes — ContratacaoService com cobertura
         run: |
@@ -150,7 +151,7 @@ jobs:
             --configuration Release \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=./coverage.opencover.xml
+            "/p:CoverletOutput=${{ github.workspace }}/tests/ContratacaoService.Tests/coverage.opencover.xml"
 
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
@@ -171,7 +172,7 @@ jobs:
           key: ${{ secrets.VPS_HOSTINGER_SSH_KEY }}
           script: |
             cd /home/projetos/proposta-seguros
-            git pull origin main
+            git pull origin main 
 
             BUILD_VERSION="1.0.${{ github.run_number }}"
             BUILD_COMMIT=$(git rev-parse --short HEAD)
