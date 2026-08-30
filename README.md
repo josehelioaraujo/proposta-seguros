@@ -506,3 +506,75 @@ USAR_RABBITMQ=false
 ```
 
 Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente.
+
+---
+
+## Mensageria — Produtor e Consumidores
+
+Nossa aplicacao atua apenas como **produtora** de eventos. O ContratacaoService
+publica o evento `PropostaContratadaEvent` na fila apos cada contratacao
+bem-sucedida e nao se preocupa com o que acontece a seguir — esse e o
+principio do desacoplamento via mensageria.
+
+### O que publicamos
+
+```
+Evento: PropostaContratadaEvent
+Exchange: proposta.exchange (Direct)
+Fila:     proposta.contratada.queue
+
+Campos:
+├── ContratacaoId    — identificador unico da contratacao
+├── PropostaId       — referencia a proposta contratada
+├── Cpf              — CPF do segurado
+├── DataContratacao  — data e hora da contratacao
+└── OcorridoEm       — timestamp do evento
+```
+
+### Quem consumiria em producao real
+
+Cada consumidor e um microservico independente que escuta a fila
+e reage ao evento de forma autonoma:
+
+| Consumidor | Responsabilidade |
+|------------|-----------------|
+| **ApoliceService** | Gera o documento PDF da apolice de seguro e disponibiliza para o segurado |
+| **CobrancaService** | Agenda o debito mensal do premio na conta ou cartao do segurado |
+| **NotificacaoService** | Envia email e SMS de confirmacao da contratacao ao segurado |
+| **SusepService** | Registra a contratacao junto a SUSEP (orgao regulador de seguros) dentro do prazo legal de 24h |
+| **AntiFraudeService** | Analisa o perfil do segurado e a contratacao em busca de padroes suspeitos |
+| **AuditoriaService** | Registra todos os eventos em log imutavel para fins de compliance e rastreabilidade |
+
+### Por que mensageria e nao HTTP direto
+
+```
+Sem mensageria (HTTP sincrono):
+└── ContratacaoService chama cada servico diretamente
+    ├── Se NotificacaoService cair  → contratacao falha
+    ├── Se CobrancaService lento    → resposta demora
+    └── Acoplamento alto entre servicos
+
+Com mensageria (assincrono):
+└── ContratacaoService publica o evento e retorna 201
+    ├── Cada consumidor processa no seu proprio ritmo
+    ├── Se um cair, a mensagem fica na fila ate ele voltar
+    ├── Escala independente por servico
+    └── Desacoplamento total
+```
+
+### Como verificar as mensagens publicadas
+
+Apos rodar o fluxo 07 no Postman, acesse o painel do RabbitMQ:
+
+```
+URL:     http://2.25.122.11:15672
+Usuario: guest
+Senha:   guest
+
+Queues and Streams
+└── proposta.contratada.queue
+    └── Messages ready: N (mensagens aguardando consumidor)
+```
+
+As mensagens ficam acumuladas pois nao ha consumidores implementados
+neste projeto — em producao real seriam processadas imediatamente.
