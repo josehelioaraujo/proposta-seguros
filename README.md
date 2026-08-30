@@ -3,7 +3,7 @@
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
 
-## Visão Geral 
+## Visão Geral
 
 O sistema é composto por dois microserviços independentes:
 
@@ -14,7 +14,7 @@ O sistema é composto por dois microserviços independentes:
 
 ---
 
-## Diagrama Funcional
+## Diagrama Arquitetural
 
 ```mermaid
 flowchart TD
@@ -50,7 +50,7 @@ flowchart TD
 ```
 
 <details>
-<summary><strong>Como o sistema funciona</strong></summary>
+<summary><strong>Fluxo de Funcionamento</strong></summary>
 
 <br>
 
@@ -61,6 +61,34 @@ O cliente (Swagger, Postman ou aplicação front-end) interage com dois serviço
 **ContratacaoService** recebe a requisição de contratação, consulta o PropostaService via HTTP para confirmar que a proposta existe e está aprovada, persiste a contratação e publica o evento `PropostaContratadaEvent` no RabbitMQ. A publicação é opcional (feature flag) e, caso o RabbitMQ esteja indisponível, o `NullEventPublisher` garante que a API não falhe — a contratação é salva normalmente.
 
 Ambos os serviços compartilham o mesmo banco `seguros_db`, segregados por schemas (`proposta` e `contratacao`).
+
+</details>
+
+<details>
+<summary><strong>O que é Arquitetura Hexagonal — e como nossa implementação é aderente</strong></summary>
+
+<br>
+
+A Arquitetura Hexagonal (Ports & Adapters), proposta por Alistair Cockburn, organiza a aplicação em três zonas concêntricas:
+
+- **Núcleo (Domain + Application)** — contém as regras de negócio e os casos de uso. É completamente isolado: não referencia banco de dados, HTTP, fila ou qualquer framework externo.
+- **Ports** — interfaces definidas pelo núcleo que descrevem o que ele precisa do mundo externo (ex: "preciso persistir uma proposta", "preciso publicar um evento").
+- **Adapters** — implementações concretas dos Ports, vivendo na camada de Infrastructure. São substituíveis sem alterar o núcleo.
+
+O princípio central é que **a infraestrutura depende do domínio — nunca o contrário**.
+
+---
+
+**Como nossas camadas mapeiam para a Arquitetura Hexagonal:**
+
+| Camada do projeto | Papel na Hexagonal | O que contém |
+|-------------------|--------------------|--------------|
+| `*.Domain` | Núcleo — entidades e Ports de saída | `Proposta`, `Contratacao`, `IPropostaRepository`, `IContratacaoRepository`, `IEventPublisher`, `IRegraSeguro` |
+| `*.Application` | Núcleo — casos de uso | `CriarPropostaUseCase`, `ContratarPropostaUseCase`, `Result<T>`, DTOs |
+| `*.Infrastructure` | Adapters de saída | `DapperPropostaRepository`, `InMemoryPropostaRepository`, `RabbitMqEventPublisher`, `NullEventPublisher`, `HttpPropostaServiceClient` |
+| `*.Api` | Adapter de entrada | Controllers REST, configuração de DI, injeção do Adapter correto via feature flag |
+
+**Evidência prática da aderência:** os 13 testes unitários rodam sem banco de dados, sem Docker e sem RabbitMQ — porque os Use Cases dependem apenas das interfaces do Domain, e os testes injetam mocks no lugar dos Adapters reais. Trocar PostgreSQL por InMemory exige zero alteração de código — apenas uma flag de configuração.
 
 </details>
 
