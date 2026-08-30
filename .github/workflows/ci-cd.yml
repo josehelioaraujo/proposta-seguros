@@ -116,8 +116,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar SonarScanner
-        run: dotnet tool install --global dotnet-sonarscanner
+      - name: Instalar ferramentas
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          dotnet tool install --global dotnet-reportgenerator-globaltool
 
       - name: Restaurar dependências
         run: dotnet restore proposta-seguros.sln
@@ -129,7 +131,7 @@ jobs:
             /o:"josehelioaraujo" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="/home/runner/work/proposta-seguros/proposta-seguros/coverage/opencover.xml"
 
       - name: Build para análise
         run: dotnet build proposta-seguros.sln --no-restore --configuration Release
@@ -140,7 +142,15 @@ jobs:
             --no-build \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
+            --results-directory /home/runner/work/proposta-seguros/proposta-seguros/testresults \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: Consolidar relatório de cobertura
+        run: |
+          reportgenerator \
+            -reports:"/home/runner/work/proposta-seguros/proposta-seguros/testresults/**/coverage.opencover.xml" \
+            -targetdir:"/home/runner/work/proposta-seguros/proposta-seguros/coverage" \
+            -reporttypes:OpenCover
 
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
