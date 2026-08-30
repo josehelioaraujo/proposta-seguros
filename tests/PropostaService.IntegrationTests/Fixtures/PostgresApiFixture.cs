@@ -7,6 +7,8 @@ namespace PropostaService.IntegrationTests.Fixtures;
 
 public class PostgresApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    public static bool DockerDisponivel { get; private set; }
+
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
         .WithDatabase("seguros_db")
@@ -14,14 +16,35 @@ public class PostgresApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         .WithPassword("postgres")
         .Build();
 
+    static PostgresApiFixture()
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            var client = new Docker.DotNet.DockerClientConfiguration().CreateClient();
+            client.System.PingAsync(cts.Token).GetAwaiter().GetResult();
+            DockerDisponivel = true;
+        }
+        catch
+        {
+            DockerDisponivel = false;
+        }
+    }
+
     public async Task InitializeAsync()
     {
+        if (!DockerDisponivel) return;
         await _postgres.StartAsync();
         await AplicarMigrationsAsync();
     }
 
     public new async Task DisposeAsync()
     {
+        if (!DockerDisponivel)
+        {
+            await base.DisposeAsync();
+            return;
+        }
         await _postgres.DisposeAsync();
         await base.DisposeAsync();
     }
