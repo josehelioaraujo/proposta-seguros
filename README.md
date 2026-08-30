@@ -169,6 +169,8 @@ proposta-seguros/
 
 ## Como Executar
 
+> Optei por VPS em vez de ambiente local para aproximar o projeto de um cenário real de produção com provisionamento, deploy via SSH e operação com Docker em servidor Linux são habilidades que fazem parte do dia a dia de desenvolvimento moderno.
+
 ### Opção 1 — Docker na VPS (recomendado)
 
 ```bash
