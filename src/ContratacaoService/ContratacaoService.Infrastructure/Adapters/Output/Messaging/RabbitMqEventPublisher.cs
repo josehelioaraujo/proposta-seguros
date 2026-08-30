@@ -1,66 +1,81 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using ContratacaoService.Domain.Ports.Output;
 using ContratacaoService.Infrastructure.Settings;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace ContratacaoService.Infrastructure.Adapters.Output.Messaging;
 
 public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
 {
-    private readonly IConnection _connection;
-    private readonly IChannel    _channel;
-    private readonly RabbitMqSettings _settings;
+    private readonly RabbitMqSettings                    _settings;
+    private readonly ILogger<RabbitMqEventPublisher>     _logger;
+    private IConnection? _connection;
+    private IChannel?    _channel;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
-    private RabbitMqEventPublisher(
-        IConnection       connection,
-        IChannel          channel,
-        RabbitMqSettings  settings)
+    public RabbitMqEventPublisher(
+        RabbitMqSettings                 settings,
+        ILogger<RabbitMqEventPublisher>  logger)
     {
-        _connection = connection;
-        _channel    = channel;
-        _settings   = settings;
+        _settings = settings;
+        _logger   = logger;
     }
 
-    // Factory async — RabbitMQ.Client 7.x exige async
-    public static async Task<RabbitMqEventPublisher> CreateAsync(RabbitMqSettings settings)
+    private async Task EnsureConnectedAsync()
     {
-        var factory = new ConnectionFactory
+        if (_channel is not null && _channel.IsOpen) return;
+
+        await _lock.WaitAsync();
+        try
         {
-            HostName    = settings.Host,
-            Port        = settings.Port,
-            UserName    = settings.Username,
-            Password    = settings.Password,
-            VirtualHost = settings.VirtualHost
-        };
+            if (_channel is not null && _channel.IsOpen) return;
 
-        var connection = await factory.CreateConnectionAsync();
-        var channel    = await connection.CreateChannelAsync();
+            _logger.LogInformation("Conectando ao RabbitMQ em {Host}:{Port}...", _settings.Host, _settings.Port);
 
-        // Declara exchange e fila
-        await channel.ExchangeDeclareAsync(
-            exchange:    settings.Exchange,
-            type:        ExchangeType.Direct,
-            durable:     true,
-            autoDelete:  false);
+            var factory = new ConnectionFactory
+            {
+                HostName    = _settings.Host,
+                Port        = _settings.Port,
+                UserName    = _settings.Username,
+                Password    = _settings.Password,
+                VirtualHost = _settings.VirtualHost
+            };
 
-        await channel.QueueDeclareAsync(
-            queue:      settings.Queue,
-            durable:    true,
-            exclusive:  false,
-            autoDelete: false);
+            _connection = await factory.CreateConnectionAsync();
+            _channel    = await _connection.CreateChannelAsync();
 
-        await channel.QueueBindAsync(
-            queue:      settings.Queue,
-            exchange:   settings.Exchange,
-            routingKey: settings.RoutingKey);
+            await _channel.ExchangeDeclareAsync(
+                exchange:   _settings.Exchange,
+                type:       ExchangeType.Direct,
+                durable:    true,
+                autoDelete: false);
 
-        return new RabbitMqEventPublisher(connection, channel, settings);
+            await _channel.QueueDeclareAsync(
+                queue:      _settings.Queue,
+                durable:    true,
+                exclusive:  false,
+                autoDelete: false);
+
+            await _channel.QueueBindAsync(
+                queue:      _settings.Queue,
+                exchange:   _settings.Exchange,
+                routingKey: _settings.RoutingKey);
+
+            _logger.LogInformation("RabbitMQ conectado com sucesso!");
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     public async Task PublishAsync<T>(string exchange, string routingKey, T message)
         where T : class
     {
+        await EnsureConnectedAsync();
+
         var json  = JsonSerializer.Serialize(message);
         var body  = Encoding.UTF8.GetBytes(json);
 
@@ -71,17 +86,19 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
             DeliveryMode = DeliveryModes.Persistent
         };
 
-        await _channel.BasicPublishAsync(
-            exchange:   exchange,
-            routingKey: routingKey,
-            mandatory:  false,
+        await _channel!.BasicPublishAsync(
+            exchange:        exchange,
+            routingKey:      routingKey,
+            mandatory:       false,
             basicProperties: props,
-            body:       body);
+            body:            body);
+
+        _logger.LogInformation("Evento publicado  Exchange: {Exchange} | RoutingKey: {RoutingKey}", exchange, routingKey);
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _channel.CloseAsync();
-        await _connection.CloseAsync();
+        if (_channel is not null) await _channel.CloseAsync();
+        if (_connection is not null) await _connection.CloseAsync();
     }
 }
