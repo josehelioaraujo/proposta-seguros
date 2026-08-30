@@ -90,6 +90,18 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 
 **Evidência prática da aderência:** os 13 testes unitários rodam sem banco de dados, sem Docker e sem RabbitMQ — porque os Use Cases dependem apenas das interfaces do Domain, e os testes injetam mocks no lugar dos Adapters reais. Trocar PostgreSQL por InMemory exige zero alteração de código — apenas uma flag de configuração.
 
+---
+
+**Tipos de seguro suportados** — cada tipo possui sua própria implementação de `IRegraSeguro` (Strategy Pattern):
+
+| Código | Tipo |
+|--------|------|
+| 1 | SeguroFGTSProtegido |
+| 2 | SeguroVidaFamiliar |
+| 3 | SeguroCartaoProtegido |
+| 4 | ProtecaoCreditoTrabalhador |
+| 5 | SeguroContaCelularProtegidos |
+
 </details>
 
 ---
@@ -107,17 +119,6 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 
 ---
 
-## Tipos de Seguro
-
-| Código | Tipo | Valor Mínimo |
-|--------|------|--------------| 
-| 1 | SeguroFGTSProtegido | R$ 50,00 |
-| 2 | SeguroVidaFamiliar | R$ 30,00 |
-| 3 | SeguroCartaoProtegido | R$ 15,00 |
-| 4 | ProtecaoCreditoTrabalhador | R$ 25,00 |
-| 5 | SeguroContaCelularProtegidos | R$ 10,00 |
-
----
 
 ## Estrutura Organizacional
 
@@ -169,7 +170,7 @@ proposta-seguros/
 
 ## Como Executar
 
-> Optei por VPS em vez de ambiente local para aproximar o projeto de um cenário real de produção com provisionamento, deploy via SSH e operação com Docker em servidor Linux são habilidades que fazem parte do dia a dia de desenvolvimento moderno.
+> Optei por VPS em vez de ambiente local para aproximar o projeto de um cenário real de produção — provisionamento, deploy via SSH e operação com Docker em servidor Linux são habilidades que fazem parte do dia a dia de desenvolvimento moderno.
 
 ### Opção 1 — Docker na VPS (recomendado)
 
