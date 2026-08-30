@@ -3,6 +3,7 @@
 [![CI/CD](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
+[![Evidências E2E](https://img.shields.io/badge/Testes%20E2E-Postman%20%7C%20Newman-orange)](https://josehelioaraujo.github.io/proposta-seguros)
 
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
@@ -500,6 +501,26 @@ acessível publicamente para avaliação sem necessidade de setup local.
 PropostaService:    http://2.25.122.11:5001
 ContratacaoService: http://2.25.122.11:5002
 ```
+
+### Testes E2E Automatizados — Newman + GitHub Pages
+
+Não solicitado no enunciado. A collection Postman é executada automaticamente via **Newman** após cada deploy na VPS, gerando um relatório HTML publicado no GitHub Pages.
+
+```
+Deploy VPS → Newman (Postman CLI) → GitHub Pages
+```
+
+O relatório é atualizado a cada push e fica disponível publicamente:
+
+**[📊 Ver Relatório de Testes E2E](https://josehelioaraujo.github.io/proposta-seguros)**
+
+Cenários executados automaticamente (Fluxo 07 — PostgreSQL + RabbitMQ):
+- Health Checks dos dois serviços
+- Criar proposta com CPF válido gerado automaticamente
+- Aprovar proposta
+- Contratar proposta aprovada
+- Verificar evento publicado na fila RabbitMQ
+- Verificar persistência no PostgreSQL via Adminer
 
 ### Pipeline de CI/CD
 

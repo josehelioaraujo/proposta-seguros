@@ -162,7 +162,7 @@ jobs:
     needs: [ integration-test-rabbitmq, sonar ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
-    steps: 
+    steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -185,3 +185,41 @@ jobs:
             docker compose up -d
 
             echo "Deploy concluido - versao $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
+
+  # ─── JOB 6: Smoke Tests — Newman ─────────────────────────────────────────────
+  newman:
+    name: Smoke Tests E2E
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Aguardar VPS estabilizar
+        run: sleep 15
+
+      - name: Instalar Newman e reporter HTML
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - name: Executar collection Postman
+        run: |
+          newman run docs/postman/proposta-seguros.postman_collection.json \
+            -e docs/postman/env-vps.json \
+            --folder "07 — Fluxo VPS PostgreSQL + RabbitMQ" \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export newman-report/index.html \
+            --reporter-htmlextra-title "Proposta de Seguros — Evidências de Testes E2E" \
+            --reporter-htmlextra-darkTheme \
+            --suppress-exit-code
+
+      - name: Publicar relatório no GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./newman-report
+          publish_branch: gh-pages
+          commit_message: "ci: atualiza relatorio de testes E2E"
