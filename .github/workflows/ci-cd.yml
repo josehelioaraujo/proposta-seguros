@@ -116,10 +116,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar ferramentas
-        run: |
-          dotnet tool install --global dotnet-sonarscanner
-          dotnet tool install --global dotnet-reportgenerator-globaltool
+      - name: Instalar SonarScanner
+        run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Restaurar dependências
         run: dotnet restore proposta-seguros.sln
@@ -131,26 +129,28 @@ jobs:
             /o:"josehelioaraujo" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="/home/runner/work/proposta-seguros/proposta-seguros/coverage/opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="tests/PropostaService.Tests/coverage.opencover.xml,tests/ContratacaoService.Tests/coverage.opencover.xml"
 
       - name: Build para análise
         run: dotnet build proposta-seguros.sln --no-restore --configuration Release
 
-      - name: Executar testes com cobertura
+      - name: Executar testes — PropostaService com cobertura
         run: |
-          dotnet test proposta-seguros.sln \
+          dotnet test tests/PropostaService.Tests/PropostaService.Tests.csproj \
             --no-build \
             --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory /home/runner/work/proposta-seguros/proposta-seguros/testresults \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./coverage.opencover.xml
 
-      - name: Consolidar relatório de cobertura
+      - name: Executar testes — ContratacaoService com cobertura
         run: |
-          reportgenerator \
-            -reports:"/home/runner/work/proposta-seguros/proposta-seguros/testresults/**/coverage.opencover.xml" \
-            -targetdir:"/home/runner/work/proposta-seguros/proposta-seguros/coverage" \
-            -reporttypes:OpenCover
+          dotnet test tests/ContratacaoService.Tests/ContratacaoService.Tests.csproj \
+            --no-build \
+            --configuration Release \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./coverage.opencover.xml
 
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
