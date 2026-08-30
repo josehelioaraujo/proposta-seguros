@@ -130,18 +130,19 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.projectBaseDir="${{ github.workspace }}" \
-            /d:sonar.cs.opencover.reportsPaths="${{ github.workspace }}/tests/PropostaService.Tests/coverage.opencover.xml,${{ github.workspace }}/tests/ContratacaoService.Tests/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="${{ github.workspace }}/coverage/proposta.opencover.xml,${{ github.workspace }}/coverage/contratacao.opencover.xml"
 
       - name: Build para análise
         run: dotnet build proposta-seguros.sln --no-restore --configuration Release
 
       - name: Executar testes — PropostaService com cobertura
         run: |
+          mkdir -p ${{ github.workspace }}/coverage
           dotnet test tests/PropostaService.Tests/PropostaService.Tests.csproj \
             --configuration Release \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
-            "/p:CoverletOutput=${{ github.workspace }}/tests/PropostaService.Tests/coverage.opencover.xml"
+            "/p:CoverletOutput=${{ github.workspace }}/coverage/proposta.opencover.xml"
 
       - name: Executar testes — ContratacaoService com cobertura
         run: |
@@ -149,7 +150,7 @@ jobs:
             --configuration Release \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
-            "/p:CoverletOutput=${{ github.workspace }}/tests/ContratacaoService.Tests/coverage.opencover.xml"
+            "/p:CoverletOutput=${{ github.workspace }}/coverage/contratacao.opencover.xml"
 
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
@@ -161,7 +162,7 @@ jobs:
     needs: [ integration-test-rabbitmq, sonar ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
-    steps:
+    steps: 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
