@@ -587,10 +587,15 @@ neste projeto — em producao real seriam processadas imediatamente.
 
 Interface web para visualizar e consultar o banco de dados PostgreSQL.
 
-```
-Sobe o container (profile tools):
-docker compose --profile tools up -d adminer
+```bash
+# Sobe o Adminer
+./scripts/set-adminer.sh --enable
 
+# Para o Adminer
+./scripts/set-adminer.sh --disable
+```
+
+```
 URL:      http://2.25.122.11:5050
 Sistema:  PostgreSQL
 Servidor: postgres
@@ -603,21 +608,8 @@ Tabelas disponiveis:
 
 ```
 seguros_db
-├── proposta.propostas      — propostas de seguro criadas
+├── proposta.propostas       — propostas de seguro criadas
 └── contratacao.contratacoes — contratacoes realizadas
-```
-
-Para subir junto com os demais containers:
-
-```bash
-# Na VPS
-docker compose --profile tools up -d
-```
-
-Para parar:
-
-```bash
-docker compose --profile tools down
 ```
 
 ---
