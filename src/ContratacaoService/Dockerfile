@@ -20,6 +20,15 @@ RUN dotnet publish src/ContratacaoService/ContratacaoService.Api/ContratacaoServ
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
+
+# Versioning
+ARG BUILD_VERSION=local
+ARG BUILD_COMMIT=local
+ARG BUILD_DATE=local
+ENV APP_VERSION=$BUILD_VERSION
+ENV APP_COMMIT=$BUILD_COMMIT
+ENV APP_BUILD_DATE=$BUILD_DATE
+
 EXPOSE 5002
 ENV ASPNETCORE_URLS=http://+:5002
 ENV ASPNETCORE_ENVIRONMENT=Production

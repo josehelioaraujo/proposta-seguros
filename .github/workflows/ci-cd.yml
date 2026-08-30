@@ -91,6 +91,16 @@ jobs:
           script: |
             cd /home/projetos/proposta-seguros
             git pull origin main
-            docker compose build --no-cache
+
+            BUILD_VERSION="1.0.0"
+            BUILD_COMMIT=$(git rev-parse --short HEAD)
+            BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+            docker compose build --no-cache \
+              --build-arg BUILD_VERSION=$BUILD_VERSION \
+              --build-arg BUILD_COMMIT=$BUILD_COMMIT \
+              --build-arg BUILD_DATE=$BUILD_DATE
+
             docker compose up -d
-            echo "✅ Deploy concluído em $(date)"
+
+            echo "✅ Deploy concluído — versão $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
