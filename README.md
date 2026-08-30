@@ -487,6 +487,42 @@ PropostaService:    http://2.25.122.11:5001
 ContratacaoService: http://2.25.122.11:5002
 ```
 
+### Pipeline de CI/CD
+
+Não solicitado no enunciado. Implementado para demonstrar automação completa do ciclo de desenvolvimento — do commit ao ambiente de produção, sem intervenção manual.
+
+O pipeline é composto por três etapas executadas em sequência:
+
+```
+push em src/** → Testes de Unidade → SonarCloud → Deploy VPS
+                       ❌ para tudo      ❌ para aqui
+```
+
+- **Testes de Unidade** — executa os 13 testes automaticamente a cada push. Se algum falhar, o pipeline é interrompido e o deploy não acontece.
+- **SonarCloud** — analisa qualidade de código, bugs, code smells e duplicações. Só prossegue se os testes passarem.
+- **Deploy automático na VPS** — conecta via SSH, faz `git pull`, reconstrói as imagens Docker e sobe os containers. Só executa se testes e análise passarem.
+
+O pipeline **não dispara** em commits de documentação (`README`, `docs/`, `scripts/`) — apenas alterações em `src/**` ou no próprio workflow acionam a execução, evitando builds desnecessários.
+
+Cada deploy injeta automaticamente a versão, o commit SHA e a data de build nas imagens Docker, rastreáveis via endpoint:
+
+```
+GET http://2.25.122.11:5001/info
+GET http://2.25.122.11:5002/info
+```
+
+```json
+{
+  "service":     "PropostaService",
+  "version":     "1.0.4",
+  "commit":      "8661ff2",
+  "builtAt":     "2026-08-30T15:37:41Z",
+  "serverTime":  "2026-08-30T15:38:23Z",
+  "serverName":  "bba1df1c6759",
+  "environment": "Production"
+}
+```
+
 ---
 
 ## Documentação
