@@ -6,6 +6,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ContratacaoService.Application.Extensions;
 using ContratacaoService.Infrastructure.Extensions;
 
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Camadas — Hexagonal
@@ -90,3 +92,4 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 });
 
 app.Run();
+
