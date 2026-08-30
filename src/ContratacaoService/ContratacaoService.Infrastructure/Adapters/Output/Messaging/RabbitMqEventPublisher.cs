@@ -9,28 +9,28 @@ namespace ContratacaoService.Infrastructure.Adapters.Output.Messaging;
 
 public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
 {
-    private readonly RabbitMqSettings                    _settings;
-    private readonly ILogger<RabbitMqEventPublisher>     _logger;
+    private readonly RabbitMqSettings                   _settings;
+    private readonly ILogger<RabbitMqEventPublisher>    _logger;
     private IConnection? _connection;
     private IChannel?    _channel;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     public RabbitMqEventPublisher(
-        RabbitMqSettings                 settings,
-        ILogger<RabbitMqEventPublisher>  logger)
+        RabbitMqSettings                settings,
+        ILogger<RabbitMqEventPublisher> logger)
     {
         _settings = settings;
         _logger   = logger;
     }
 
-    private async Task EnsureConnectedAsync()
+    private async Task<bool> EnsureConnectedAsync()
     {
-        if (_channel is not null && _channel.IsOpen) return;
+        if (_channel is not null && _channel.IsOpen) return true;
 
         await _lock.WaitAsync();
         try
         {
-            if (_channel is not null && _channel.IsOpen) return;
+            if (_channel is not null && _channel.IsOpen) return true;
 
             _logger.LogInformation("Conectando ao RabbitMQ em {Host}:{Port}...", _settings.Host, _settings.Port);
 
@@ -64,6 +64,13 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
                 routingKey: _settings.RoutingKey);
 
             _logger.LogInformation("RabbitMQ conectado com sucesso!");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                "RabbitMQ indisponivel  evento nao publicado. Erro: {Erro}", ex.Message);
+            return false;
         }
         finally
         {
@@ -74,7 +81,8 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
     public async Task PublishAsync<T>(string exchange, string routingKey, T message)
         where T : class
     {
-        await EnsureConnectedAsync();
+        var conectado = await EnsureConnectedAsync();
+        if (!conectado) return;
 
         var json  = JsonSerializer.Serialize(message);
         var body  = Encoding.UTF8.GetBytes(json);
@@ -93,7 +101,9 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
             basicProperties: props,
             body:            body);
 
-        _logger.LogInformation("Evento publicado  Exchange: {Exchange} | RoutingKey: {RoutingKey}", exchange, routingKey);
+        _logger.LogInformation(
+            "Evento publicado  Exchange: {Exchange} | RoutingKey: {RoutingKey}",
+            exchange, routingKey);
     }
 
     public async ValueTask DisposeAsync()
