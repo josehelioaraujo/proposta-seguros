@@ -22,10 +22,14 @@ O sistema é composto por dois microserviços independentes:
 
 ---
 
-## Diagrama Arquitetural
+## Diagrama Interativo
 
-> 🔍 **[Ver diagrama interativo e navegável →](https://gitdiagram.com/josehelioaraujo/proposta-seguros)**  
+> 🔍 **[Abrir diagrama interativo e navegável →](https://gitdiagram.com/josehelioaraujo/proposta-seguros)**  
 > Gerado automaticamente pelo GitDiagram — clique nos componentes para navegar pelo código.
+
+---
+
+## Diagrama Arquitetural
 
 ```mermaid
 flowchart TD
