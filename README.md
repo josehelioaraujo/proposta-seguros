@@ -496,18 +496,20 @@ ContratacaoService: http://2.25.122.11:5002
 
 Não solicitado no enunciado. Implementado para demonstrar automação completa do ciclo de desenvolvimento — do commit ao ambiente de produção, sem intervenção manual.
 
-O pipeline é composto por três etapas executadas em sequência:
+O pipeline é composto por cinco etapas executadas em sequência:
 
 ```
-push em src/** → Testes de Unidade → SonarCloud → Deploy VPS
-                       ❌ para tudo      ❌ para aqui
+push em src/** → Testes de Unidade → Integração PropostaService → Integração RabbitMQ → SonarCloud → Deploy VPS
+                       ❌ para tudo         ❌ para aqui                ❌ para aqui        ❌ para aqui
 ```
 
 - **Testes de Unidade** — executa os 13 testes automaticamente a cada push. Se algum falhar, o pipeline é interrompido e o deploy não acontece.
-- **SonarCloud** — analisa qualidade de código, bugs, code smells e duplicações. Só prossegue se os testes passarem.
+- **Testes de Integração — PropostaService** — sobe a API em memória via `WebApplicationFactory` e testa os modos InMemory e PostgreSQL com banco real via Testcontainers.
+- **Testes de Integração — RabbitMQ** — sobe PostgreSQL e RabbitMQ reais via Testcontainers e valida que o ContratacaoService conecta e opera corretamente.
+- **SonarCloud** — analisa qualidade de código, bugs, code smells e duplicações. Só prossegue se todos os testes passarem.
 - **Deploy automático na VPS** — conecta via SSH, faz `git pull`, reconstrói as imagens Docker e sobe os containers. Só executa se testes e análise passarem.
 
-O pipeline **não dispara** em commits de documentação (`README`, `docs/`, `scripts/`) — apenas alterações em `src/**` ou no próprio workflow acionam a execução, evitando builds desnecessários.
+O pipeline **não dispara** em commits de documentação (`README`, `docs/`, `scripts/`) — apenas alterações em `src/**` ou `tests/**` acionam a execução, evitando builds desnecessários.
 
 Cada deploy injeta automaticamente a versão, o commit SHA e a data de build nas imagens Docker, rastreáveis via endpoint:
 
@@ -519,14 +521,40 @@ GET http://2.25.122.11:5002/info
 ```json
 {
   "service":     "PropostaService",
-  "version":     "1.0.4",
-  "commit":      "8661ff2",
-  "builtAt":     "2026-08-30T15:37:41Z",
-  "serverTime":  "2026-08-30T15:38:23Z",
+  "version":     "1.0.11",
+  "commit":      "56d4384",
+  "builtAt":     "2026-08-30T18:27:11Z",
+  "serverTime":  "2026-08-30T18:28:00Z",
   "serverName":  "bba1df1c6759",
   "environment": "Production"
 }
 ```
+
+### Testes de Integração
+
+Não solicitados no enunciado. Implementados para demonstrar cobertura além dos testes unitários — validando o comportamento real da aplicação com infraestrutura real.
+
+Utilizam `WebApplicationFactory` (ASP.NET Core) e `Testcontainers` — containers Docker reais sobem e são destruídos automaticamente durante a execução dos testes, sem dependência de ambiente externo.
+
+Os testes são controlados pela variável `RUN_INTEGRATION_TESTS`:
+- **`true`** (padrão no pipeline) — todos os testes executam
+- **`false`** — testes de integração são pulados (`Skipped`), sem falha
+- **Sem Docker local** — testes com Testcontainers são pulados automaticamente
+
+**Cenários cobertos:**
+
+| Projeto | Modo | Cenário | Resultado esperado |
+|---------|------|---------|-------------------|
+| PropostaService | InMemory | `POST /api/Propostas` com dados válidos | 201 Created |
+| PropostaService | InMemory | `GET /api/Propostas` | 200 OK |
+| PropostaService | InMemory | `GET /health` | Healthy |
+| PropostaService | InMemory | `POST /api/Propostas` com CPF inválido | 400 Bad Request |
+| PropostaService | PostgreSQL | `POST` + `GET /{id}` — cria e persiste | 201 + 200 |
+| PropostaService | PostgreSQL | Proposta duplicada (mesmo CPF + tipo) | 409 Conflict |
+| PropostaService | PostgreSQL | `GET /health` com banco real | Healthy |
+| ContratacaoService | RabbitMQ | Conexão direta ao broker | IsOpen = true |
+| ContratacaoService | RabbitMQ | `GET /health/live` com RabbitMQ real | Healthy |
+| ContratacaoService | RabbitMQ | `POST /api/Contratacoes` sem PropostaService | API responde (sem travar) |
 
 ---
 
