@@ -235,7 +235,7 @@
         {
           "name": "04.1 Criar Proposta FGTS",
           "event": [
-            { "listen": "prerequest", "script": { "exec": ["// Sem gerador aqui — dados fixos"] }},
+            { "listen": "prerequest", "script": { "exec": [""] }},
             { "listen": "test", "script": { "exec": [
               "pm.test('Status 201', () => pm.response.to.have.status(201));",
               "const b = pm.response.json();",
@@ -298,19 +298,26 @@
     },
     {
       "name": "05 — Fluxo VPS InMemory",
-      "description": "Dados ALEATORIOS gerados UMA VEZ no inicio — InMemory\nAntes: ./scripts/set-banco.sh --disable",
+      "description": "CPF valido gerado automaticamente — InMemory\nAntes: ./scripts/set-banco.sh --disable",
       "item": [
         {
           "name": "05.1 [AUTO] Criar Proposta",
           "event": [
             { "listen": "prerequest", "script": { "exec": [
-              "// Gerador de dados — executa UMA VEZ aqui no primeiro request",
-              "const nomes  = ['Ana Lima','Carlos Souza','Maria Silva','Pedro Costa','Julia Mendes','Roberto Alves','Fernanda Rocha','Lucas Pereira'];",
-              "const cpfs   = ['529.982.247-25','111.444.777-35','222.555.888-46','634.123.987-09','987.654.321-00'];",
+              "function gerarCPF() {",
+              "    const n = Array.from({length: 9}, () => Math.floor(Math.random() * 10));",
+              "    let soma = n.reduce((acc, val, i) => acc + val * (10 - i), 0);",
+              "    let d1 = (soma * 10) % 11; if (d1 >= 10) d1 = 0;",
+              "    soma = [...n, d1].reduce((acc, val, i) => acc + val * (11 - i), 0);",
+              "    let d2 = (soma * 10) % 11; if (d2 >= 10) d2 = 0;",
+              "    const cpf = [...n, d1, d2];",
+              "    return cpf.slice(0,3).join('') + '.' + cpf.slice(3,6).join('') + '.' + cpf.slice(6,9).join('') + '-' + cpf.slice(9).join('');",
+              "}",
+              "const nomes  = ['Ana Lima','Carlos Souza','Maria Silva','Pedro Costa','Julia Mendes','Roberto Alves'];",
               "const tipos  = [1,2,3,4,5];",
               "const valores = {1:150,2:80,3:25,4:45,5:15};",
               "const nome  = nomes[Math.floor(Math.random()*nomes.length)];",
-              "const cpf   = cpfs[Math.floor(Math.random()*cpfs.length)];",
+              "const cpf   = gerarCPF();",
               "const tipo  = tipos[Math.floor(Math.random()*tipos.length)];",
               "const valor = valores[tipo] + Math.floor(Math.random()*100);",
               "pm.environment.set('rand_nome',  nome);",
@@ -339,8 +346,7 @@
           "name": "05.2 [AUTO] Aprovar Proposta",
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Aprovada', () => pm.expect(pm.response.json().status).to.eql('Aprovada'));",
-            "console.log('Proposta aprovada!');"
+            "pm.test('Aprovada', () => pm.expect(pm.response.json().status).to.eql('Aprovada'));"
           ]}}],
           "request": {
             "method": "PATCH",
@@ -353,8 +359,7 @@
           "name": "05.3 [AUTO] Contratar Proposta",
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('Status 201', () => pm.response.to.have.status(201));",
-            "const b = pm.response.json();",
-            "pm.environment.set('contratacao_id', b.id);",
+            "const b = pm.response.json(); pm.environment.set('contratacao_id', b.id);",
             "console.log('Contratacao criada:', b.id);"
           ]}}],
           "request": {
@@ -384,18 +389,26 @@
     },
     {
       "name": "06 — Fluxo VPS PostgreSQL",
-      "description": "Dados ALEATORIOS gerados UMA VEZ no inicio — PostgreSQL\nAntes: ./scripts/set-banco.sh --enable",
+      "description": "CPF valido gerado automaticamente — PostgreSQL\nAntes: ./scripts/set-banco.sh --enable",
       "item": [
         {
           "name": "06.1 [POSTGRES] Criar Proposta",
           "event": [
             { "listen": "prerequest", "script": { "exec": [
+              "function gerarCPF() {",
+              "    const n = Array.from({length: 9}, () => Math.floor(Math.random() * 10));",
+              "    let soma = n.reduce((acc, val, i) => acc + val * (10 - i), 0);",
+              "    let d1 = (soma * 10) % 11; if (d1 >= 10) d1 = 0;",
+              "    soma = [...n, d1].reduce((acc, val, i) => acc + val * (11 - i), 0);",
+              "    let d2 = (soma * 10) % 11; if (d2 >= 10) d2 = 0;",
+              "    const cpf = [...n, d1, d2];",
+              "    return cpf.slice(0,3).join('') + '.' + cpf.slice(3,6).join('') + '.' + cpf.slice(6,9).join('') + '-' + cpf.slice(9).join('');",
+              "}",
               "const nomes  = ['Beatriz Santos','Diego Oliveira','Camila Ferreira','Thiago Barbosa','Larissa Nunes','Rafael Cardoso'];",
-              "const cpfs   = ['529.982.247-25','111.444.777-35','222.555.888-46','634.123.987-09','987.654.321-00'];",
               "const tipos  = [1,2,3,4,5];",
               "const valores = {1:200,2:90,3:30,4:50,5:20};",
               "const nome  = nomes[Math.floor(Math.random()*nomes.length)];",
-              "const cpf   = cpfs[Math.floor(Math.random()*cpfs.length)];",
+              "const cpf   = gerarCPF();",
               "const tipo  = tipos[Math.floor(Math.random()*tipos.length)];",
               "const valor = valores[tipo] + Math.floor(Math.random()*150);",
               "pm.environment.set('rand_nome',  nome);",
@@ -437,8 +450,7 @@
           "name": "06.3 [POSTGRES] Contratar Proposta",
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('Status 201', () => pm.response.to.have.status(201));",
-            "const b = pm.response.json();",
-            "pm.environment.set('contratacao_id', b.id);",
+            "const b = pm.response.json(); pm.environment.set('contratacao_id', b.id);",
             "console.log('[POSTGRES] Contratacao criada:', b.id);"
           ]}}],
           "request": {
@@ -469,18 +481,26 @@
     },
     {
       "name": "07 — Fluxo VPS PostgreSQL + RabbitMQ",
-      "description": "Dados ALEATORIOS gerados UMA VEZ no inicio — PostgreSQL + RabbitMQ\nAntes: ./scripts/set-rabbitmq.sh --enable",
+      "description": "CPF valido gerado automaticamente — PostgreSQL + RabbitMQ\nAntes: ./scripts/set-rabbitmq.sh --enable",
       "item": [
         {
           "name": "07.1 [RABBIT] Criar Proposta",
           "event": [
             { "listen": "prerequest", "script": { "exec": [
+              "function gerarCPF() {",
+              "    const n = Array.from({length: 9}, () => Math.floor(Math.random() * 10));",
+              "    let soma = n.reduce((acc, val, i) => acc + val * (10 - i), 0);",
+              "    let d1 = (soma * 10) % 11; if (d1 >= 10) d1 = 0;",
+              "    soma = [...n, d1].reduce((acc, val, i) => acc + val * (11 - i), 0);",
+              "    let d2 = (soma * 10) % 11; if (d2 >= 10) d2 = 0;",
+              "    const cpf = [...n, d1, d2];",
+              "    return cpf.slice(0,3).join('') + '.' + cpf.slice(3,6).join('') + '.' + cpf.slice(6,9).join('') + '-' + cpf.slice(9).join('');",
+              "}",
               "const nomes  = ['Gustavo Lima','Patricia Moura','Renato Araujo','Vanessa Castro','Marcelo Dias','Simone Ramos'];",
-              "const cpfs   = ['529.982.247-25','111.444.777-35','222.555.888-46','634.123.987-09','987.654.321-00'];",
               "const tipos  = [1,2,3,4,5];",
               "const valores = {1:300,2:100,3:40,4:60,5:25};",
               "const nome  = nomes[Math.floor(Math.random()*nomes.length)];",
-              "const cpf   = cpfs[Math.floor(Math.random()*cpfs.length)];",
+              "const cpf   = gerarCPF();",
               "const tipo  = tipos[Math.floor(Math.random()*tipos.length)];",
               "const valor = valores[tipo] + Math.floor(Math.random()*200);",
               "pm.environment.set('rand_nome',  nome);",
@@ -522,8 +542,7 @@
           "name": "07.3 [RABBIT] Contratar Proposta",
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('Status 201', () => pm.response.to.have.status(201));",
-            "const b = pm.response.json();",
-            "pm.environment.set('contratacao_id', b.id);",
+            "const b = pm.response.json(); pm.environment.set('contratacao_id', b.id);",
             "console.log('[RABBIT] Contratacao criada — evento publicado na fila!', b.id);"
           ]}}],
           "request": {
