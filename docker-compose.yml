@@ -1,4 +1,4 @@
-﻿services:
+services:
 
   postgres:
     image: postgres:16-alpine
@@ -79,6 +79,16 @@
       - seguros-network
     profiles:
       - rabbitmq
+
+  adminer:
+    image: adminer
+    container_name: seguros-adminer
+    ports:
+      - "5050:8080"
+    networks:
+      - seguros-network
+    profiles:
+      - tools
 
 volumes:
   postgres_data:

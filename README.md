@@ -578,3 +578,85 @@ Queues and Streams
 
 As mensagens ficam acumuladas pois nao ha consumidores implementados
 neste projeto — em producao real seriam processadas imediatamente.
+
+---
+
+## Paineis Administrativos
+
+### Adminer — PostgreSQL
+
+Interface web para visualizar e consultar o banco de dados PostgreSQL.
+
+```
+Sobe o container (profile tools):
+docker compose --profile tools up -d adminer
+
+URL:      http://2.25.122.11:5050
+Sistema:  PostgreSQL
+Servidor: postgres
+Usuario:  postgres
+Senha:    postgres
+Banco:    seguros_db
+```
+
+Tabelas disponiveis:
+
+```
+seguros_db
+├── proposta.propostas      — propostas de seguro criadas
+└── contratacao.contratacoes — contratacoes realizadas
+```
+
+Para subir junto com os demais containers:
+
+```bash
+# Na VPS
+docker compose --profile tools up -d
+```
+
+Para parar:
+
+```bash
+docker compose --profile tools down
+```
+
+---
+
+### RabbitMQ Management — Mensageria
+
+Interface web nativa do RabbitMQ para monitorar filas e mensagens.
+
+```
+URL:     http://2.25.122.11:15672
+Usuario: guest
+Senha:   guest
+```
+
+O que monitorar apos rodar o fluxo com RabbitMQ habilitado:
+
+```
+Queues and Streams
+└── proposta.contratada.queue
+    ├── Messages ready   — mensagens aguardando consumidor
+    ├── Message rates    — taxa de publicacao
+    └── Get messages     — visualiza o conteudo do evento
+```
+
+Para ver o conteudo de uma mensagem:
+
+```
+Queues → proposta.contratada.queue
+→ Get messages → Ackmode: Nack → Get Message(s)
+```
+
+Conteudo esperado:
+
+```json
+{
+  "ContratacaoId":   "48988e73-6c65-46f6-b10d-8b8352111df2",
+  "PropostaId":      "c13f6050-1426-48f9-83ae-41d7133fa7ba",
+  "Cpf":             "120.147.173-70",
+  "DataContratacao": "2026-08-30T00:54:47",
+  "OcorridoEm":      "2026-08-30T00:54:47"
+}
+```
