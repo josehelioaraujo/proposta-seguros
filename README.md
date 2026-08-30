@@ -215,7 +215,11 @@ dotnet run
 | Serviço | URL |
 |---|---|
 | PropostaService — Swagger | http://2.25.122.11:5001 |
+| PropostaService — Health | http://2.25.122.11:5001/health |
+| PropostaService — Info | http://2.25.122.11:5001/info |
 | ContratacaoService — Swagger | http://2.25.122.11:5002 |
+| ContratacaoService — Health | http://2.25.122.11:5002/health |
+| ContratacaoService — Info | http://2.25.122.11:5002/info |
 | RabbitMQ — Painel | http://2.25.122.11:15672 |
 
 ### Local
@@ -223,7 +227,11 @@ dotnet run
 | Serviço | URL |
 |---|---|
 | PropostaService — Swagger | http://localhost:5001 |
+| PropostaService — Health | http://localhost:5001/health |
+| PropostaService — Info | http://localhost:5001/info |
 | ContratacaoService — Swagger | http://localhost:5002 |
+| ContratacaoService — Health | http://localhost:5002/health |
+| ContratacaoService — Info | http://localhost:5002/info |
 | RabbitMQ — Painel | http://localhost:15672 |
 
 ---
