@@ -1,7 +1,6 @@
 # Proposta de Seguros
 
 [![CI/CD](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=alert_status)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 
@@ -277,6 +276,7 @@ docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001
 docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
 docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
 docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V005__add_criado_em_contratacoes.sql
 ```
 
 ### Estrutura criada
@@ -371,6 +371,7 @@ docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001
 docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
 docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
 docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
+docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V005__add_criado_em_contratacoes.sql
 
 # Liga PostgreSQL
 ./scripts/set-banco.sh --enable
