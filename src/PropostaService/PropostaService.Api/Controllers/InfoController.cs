@@ -19,10 +19,11 @@ public class InfoController : ControllerBase
         return Ok(new
         {
             service     = "PropostaService",
-            version     = Environment.GetEnvironmentVariable("APP_VERSION")   ?? "local",
-            commit      = Environment.GetEnvironmentVariable("APP_COMMIT")    ?? "local",
+            version     = Environment.GetEnvironmentVariable("APP_VERSION")    ?? "local",
+            commit      = Environment.GetEnvironmentVariable("APP_COMMIT")     ?? "local",
             builtAt     = Environment.GetEnvironmentVariable("APP_BUILD_DATE") ?? "local",
             serverTime  = DateTime.UtcNow.ToString("o"),
+            serverName  = Environment.MachineName,
             environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
         });
     }

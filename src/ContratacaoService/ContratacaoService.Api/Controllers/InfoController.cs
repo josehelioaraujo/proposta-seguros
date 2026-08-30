@@ -23,6 +23,7 @@ public class InfoController : ControllerBase
             commit      = Environment.GetEnvironmentVariable("APP_COMMIT")     ?? "local",
             builtAt     = Environment.GetEnvironmentVariable("APP_BUILD_DATE") ?? "local",
             serverTime  = DateTime.UtcNow.ToString("o"),
+            serverName  = Environment.MachineName,
             environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
         });
     }
