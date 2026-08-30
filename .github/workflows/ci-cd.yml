@@ -36,21 +36,8 @@ jobs:
       - name: Build
         run: dotnet build proposta-seguros.sln --no-restore --configuration Release
 
-      - name: Executar testes com cobertura
-        run: |
-          dotnet test proposta-seguros.sln \
-            --no-build \
-            --configuration Release \
-            --verbosity normal \
-            --collect:"XPlat Code Coverage" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover \
-            --results-directory ./coverage
-
-      - name: Upload cobertura
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-unit
-          path: ./coverage/**/coverage.opencover.xml
+      - name: Executar testes
+        run: dotnet test proposta-seguros.sln --no-build --configuration Release --verbosity normal
 
   # ─── JOB 2: Testes de Integração — PropostaService ───────────────────────────
   integration-test:
@@ -132,12 +119,6 @@ jobs:
       - name: Instalar SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner
 
-      - name: Download cobertura
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-unit
-          path: ./coverage
-
       - name: Restaurar dependências
         run: dotnet restore proposta-seguros.sln
 
@@ -148,10 +129,18 @@ jobs:
             /o:"josehelioaraujo" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="./coverage/**/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
       - name: Build para análise
         run: dotnet build proposta-seguros.sln --no-restore --configuration Release
+
+      - name: Executar testes com cobertura
+        run: |
+          dotnet test proposta-seguros.sln \
+            --no-build \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Finalizar análise SonarCloud
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
