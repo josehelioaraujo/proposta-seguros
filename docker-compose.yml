@@ -1,4 +1,4 @@
-services:
+﻿services:
 
   postgres:
     image: postgres:16-alpine
@@ -52,6 +52,7 @@ services:
       Features__UsarBancoDados: ${USAR_BANCO_DADOS:-false}
       Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
       Services__PropostaService: "http://proposta-api:5001"
+      RabbitMQ__Host: seguros-rabbitmq
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,3 +100,4 @@ volumes:
 networks:
   seguros-network:
     driver: bridge
+
