@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta de Seguros — Visão do Projeto</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #2563eb;
+    --accent2: #1d4ed8;
+    --green: #3fb950;
+    --orange: #f0883e;
+    --red: #f85149;
+    --purple: #a371f7;
+    --cyan: #39d353;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 56px;
+  }
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--surface2); }
+  .nav-links a.active { color: var(--accent); }
+
+  /* SECTIONS */
+  section {
+    min-height: 100vh;
+    padding: 5rem 2rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    letter-spacing: 0.08em;
+  }
+
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.15; margin-bottom: 1.5rem; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 600; margin-bottom: 1.25rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; }
+
+  p { color: var(--muted); margin-bottom: 1rem; max-width: 65ch; }
+
+  /* HERO */
+  #hero { min-height: 100vh; }
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+    max-width: 55ch;
+  }
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .badge-green { color: var(--green); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.08); }
+  .badge-blue { color: #60a5fa; border-color: rgba(96,165,250,0.3); background: rgba(96,165,250,0.08); }
+  .badge-orange { color: var(--orange); border-color: rgba(240,136,62,0.3); background: rgba(240,136,62,0.08); }
+  .badge-purple { color: var(--purple); border-color: rgba(163,113,247,0.3); background: rgba(163,113,247,0.08); }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  /* CARDS */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; display: block; }
+  .card h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .card p { font-size: 0.85rem; margin: 0; }
+
+  /* PIPELINE */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  .pipe-job {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+  }
+  .pipe-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 2px solid;
+  }
+  .pipe-icon.green { border-color: var(--green); background: rgba(63,185,80,0.1); }
+  .pipe-icon.blue { border-color: var(--accent); background: rgba(37,99,235,0.1); }
+  .pipe-icon.orange { border-color: var(--orange); background: rgba(240,136,62,0.1); }
+  .pipe-icon.purple { border-color: var(--purple); background: rgba(163,113,247,0.1); }
+  .pipe-label { font-size: 0.72rem; color: var(--muted); text-align: center; }
+  .pipe-arrow { color: var(--border); font-size: 1.5rem; padding: 0 0.5rem; flex-shrink: 0; }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+  .td-url {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+  }
+  td a { color: var(--accent); text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+
+  /* CODE */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: #c9d1d9;
+    overflow-x: auto;
+    margin: 1rem 0;
+    line-height: 1.7;
+  }
+  .code-block .c { color: var(--green); }
+  .code-block .s { color: var(--orange); }
+  .code-block .k { color: var(--purple); }
+
+  /* QA */
+  .qa-list { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .qa-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .qa-q {
+    padding: 1rem 1.25rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .qa-q:hover { background: var(--surface2); }
+  .qa-q .arrow { color: var(--muted); transition: transform 0.2s; font-size: 0.8rem; }
+  .qa-q.open .arrow { transform: rotate(180deg); }
+  .qa-a {
+    display: none;
+    padding: 0 1.25rem 1rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    border-top: 1px solid var(--border);
+    padding-top: 0.875rem;
+  }
+  .qa-a.visible { display: block; }
+  .qa-tip {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(63,185,80,0.08);
+    border-left: 3px solid var(--green);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+    color: var(--green);
+  }
+  .qa-warn {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(240,136,62,0.08);
+    border-left: 3px solid var(--orange);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.82rem;
+    color: var(--orange);
+  }
+
+  /* CHECKLIST */
+  .checklist { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.9rem;
+  }
+  .check-item:hover { border-color: var(--accent); }
+  .check-item.done { opacity: 0.5; }
+  .check-item.done .check-box { background: var(--green); border-color: var(--green); }
+  .check-item.done .check-label { text-decoration: line-through; }
+  .check-box {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: white;
+    transition: all 0.15s;
+  }
+
+  /* FRASES */
+  .frases { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+  .frase {
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    user-select: all;
+  }
+  .frase:hover { border-color: var(--green); }
+  .frase small { display: block; margin-top: 0.5rem; font-style: normal; font-size: 0.75rem; color: var(--muted); }
+
+  /* TAGS */
+  .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+  }
+
+  /* LAYERS */
+  .layers { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; }
+  .layer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .layer-name {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    min-width: 120px;
+  }
+  .layer-desc { font-size: 0.85rem; color: var(--muted); }
+  .layer-domain { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.3); }
+  .layer-domain .layer-name { color: var(--accent); }
+  .layer-app { background: rgba(163,113,247,0.08); border-color: rgba(163,113,247,0.3); }
+  .layer-app .layer-name { color: var(--purple); }
+  .layer-infra { background: rgba(240,136,62,0.08); border-color: rgba(240,136,62,0.3); }
+  .layer-infra .layer-name { color: var(--orange); }
+  .layer-api { background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.3); }
+  .layer-api .layer-name { color: var(--green); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+
+  /* PROGRESS */
+  .progress-bar {
+    position: fixed;
+    top: 56px; left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.1s;
+    z-index: 99;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<nav>
+  <span class="nav-logo">proposta-seguros</span>
+  <ul class="nav-links">
+    <li><a href="#hero">Início</a></li>
+    <li><a href="#entregue">Entregue</a></li>
+    <li><a href="#arquitetura">Arquitetura</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#roteiro">Roteiro</a></li>
+    <li><a href="#checklist">Checklist</a></li>
+    <li><a href="#frases">Frases</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="section-label">// sistema de proposta de seguros · .NET 10 · Arquitetura Hexagonal</div>
+  <h1>Sistema de<br>Proposta de Seguros</h1>
+  <p class="hero-sub">Guia interativo de preparação para a apresentação técnica. Navegue pelas seções, expanda as perguntas e marque o checklist antes de entrar na reunião.</p>
+
+  <div class="badges">
+    <span class="badge badge-green">✅ 13/13 Testes Unitários</span>
+    <span class="badge badge-blue">🔵 Pipeline CI/CD 5 jobs</span>
+    <span class="badge badge-orange">🟠 Smoke Tests E2E · 0 falhas</span>
+    <span class="badge badge-purple">🟣 SonarCloud · 0 Bugs</span>
+    <span class="badge badge-green">✅ VPS Hostinger · 5 containers</span>
+    <span class="badge badge-blue">🔵 .NET 10 · Hexagonal</span>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">13</span><div class="stat-label">Testes Unitários</div></div>
+    <div class="stat"><span class="stat-num">10</span><div class="stat-label">Testes Integração</div></div>
+    <div class="stat"><span class="stat-num">5</span><div class="stat-label">Jobs no Pipeline</div></div>
+    <div class="stat"><span class="stat-num">9</span><div class="stat-label">Assertions E2E</div></div>
+    <div class="stat"><span class="stat-num">0</span><div class="stat-label">Falhas E2E</div></div>
+    <div class="stat"><span class="stat-num">V005</span><div class="stat-label">Migrations SQL</div></div>
+  </div>
+</section>
+
+<!-- ENTREGUE -->
+<section id="entregue">
+  <div class="section-label">// o que foi entregue</div>
+  <h2>Funcionalidades + Bônus</h2>
+  <p>O enunciado foi atendido integralmente. Além disso, 8 itens de bônus foram implementados para demonstrar boas práticas de engenharia.</p>
+
+  <div class="cards">
+    <div class="card">
+      <span class="card-icon">🏗️</span>
+      <h3>Arquitetura Hexagonal</h3>
+      <p>.NET 10 · 2 microserviços · Domain, Application, Infrastructure, Api</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🗄️</span>
+      <h3>PostgreSQL + Dapper</h3>
+      <p>SQL explícito · migrations V001–V005 · schemas separados por serviço</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🐰</span>
+      <h3>RabbitMQ</h3>
+      <p>Producer de eventos · lazy connection · NullEventPublisher · fila durável</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🧪</span>
+      <h3>Testes</h3>
+      <p>13 unitários · 10 integração · Testcontainers · WebApplicationFactory</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🚀</span>
+      <h3>CI/CD · GitHub Actions</h3>
+      <p>5 jobs em sequência · SonarCloud · deploy automático na VPS</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">📊</span>
+      <h3>Smoke Tests E2E</h3>
+      <p>Newman + GitHub Pages · relatório HTML público · 0 falhas</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔍</span>
+      <h3>Observabilidade</h3>
+      <p>Health Checks · endpoint /info com versão e commit SHA · SonarCloud</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🐳</span>
+      <h3>Docker · VPS Real</h3>
+      <p>5 containers · Hostinger Ubuntu 24.04 · multi-stage build</p>
+    </div>
+  </div>
+</section>
+
+<!-- ARQUITETURA -->
+<section id="arquitetura">
+  <div class="section-label">// arquitetura hexagonal</div>
+  <h2>Ports &amp; Adapters na Prática</h2>
+  <p>O domínio não sabe se o banco é PostgreSQL ou lista em memória. A infraestrutura depende do domínio — nunca o contrário.</p>
+
+  <div class="layers">
+    <div class="layer layer-domain">
+      <span class="layer-name">Domain</span>
+      <span class="layer-desc">Proposta · Contratacao · IPropostaRepository · IEventPublisher · IRegraSeguro · Result&lt;T&gt;</span>
+    </div>
+    <div class="layer layer-app">
+      <span class="layer-name">Application</span>
+      <span class="layer-desc">CriarPropostaUseCase · ContratarPropostaUseCase · DTOs · FluentValidation</span>
+    </div>
+    <div class="layer layer-infra">
+      <span class="layer-name">Infrastructure</span>
+      <span class="layer-desc">DapperPropostaRepository · InMemoryPropostaRepository · RabbitMqEventPublisher · NullEventPublisher · HttpPropostaServiceClient</span>
+    </div>
+    <div class="layer layer-api">
+      <span class="layer-name">Api</span>
+      <span class="layer-desc">Controllers REST · Program.cs · Injeção de dependência · Feature Flags · Health Checks · Swagger</span>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem">
+    <h3>Padrões implementados</h3>
+    <div class="tags">
+      <span class="tag">Strategy</span>
+      <span class="tag">Factory</span>
+      <span class="tag">Repository</span>
+      <span class="tag">Adapter</span>
+      <span class="tag">Result&lt;T&gt;</span>
+      <span class="tag">Null Object</span>
+      <span class="tag">Feature Flags</span>
+      <span class="tag">Lazy Connection</span>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline">
+  <div class="section-label">// ci/cd · github actions</div>
+  <h2>Pipeline de 5 Jobs</h2>
+  <p>Qualquer push em <code style="font-family:var(--mono);color:var(--orange)">src/**</code> ou <code style="font-family:var(--mono);color:var(--orange)">tests/**</code> dispara a esteira completa. O deploy só acontece se todos os jobs anteriores passarem.</p>
+
+  <div class="pipeline">
+    <div class="pipe-job">
+      <div class="pipe-icon green">🧪</div>
+      <span class="pipe-label">Testes de<br>Unidade</span>
+    </div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-job">
+      <div class="pipe-icon blue">🔗</div>
+      <span class="pipe-label">Integração<br>PropostaService</span>
+    </div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-job">
+      <div class="pipe-icon orange">🐰</div>
+      <span class="pipe-label">Integração<br>RabbitMQ</span>
+    </div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-job">
+      <div class="pipe-icon purple">☁️</div>
+      <span class="pipe-label">SonarCloud</span>
+    </div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-job">
+      <div class="pipe-icon green">🚀</div>
+      <span class="pipe-label">Deploy VPS</span>
+    </div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-job">
+      <div class="pipe-icon blue">📊</div>
+      <span class="pipe-label">Smoke Tests<br>E2E</span>
+    </div>
+  </div>
+
+  <h3>URLs de referência rápida</h3>
+  <table>
+    <tr><th>Recurso</th><th>URL</th></tr>
+    <tr><td>Repositório</td><td><a href="https://github.com/josehelioaraujo/proposta-seguros" target="_blank" class="td-url">github.com/josehelioaraujo/proposta-seguros</a></td></tr>
+    <tr><td>Pipeline CI/CD</td><td><a href="https://github.com/josehelioaraujo/proposta-seguros/actions" target="_blank" class="td-url">.../actions</a></td></tr>
+    <tr><td>Relatório E2E</td><td><a href="https://josehelioaraujo.github.io/proposta-seguros/" target="_blank" class="td-url">josehelioaraujo.github.io/proposta-seguros</a></td></tr>
+    <tr><td>SonarCloud</td><td><a href="https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros" target="_blank" class="td-url">sonarcloud.io</a></td></tr>
+    <tr><td>PropostaService</td><td><a href="http://2.25.122.11:5001/swagger" target="_blank" class="td-url">2.25.122.11:5001/swagger</a></td></tr>
+    <tr><td>ContratacaoService</td><td><a href="http://2.25.122.11:5002/swagger" target="_blank" class="td-url">2.25.122.11:5002/swagger</a></td></tr>
+    <tr><td>RabbitMQ Painel</td><td><a href="http://2.25.122.11:15672" target="_blank" class="td-url">2.25.122.11:15672</a></td></tr>
+    <tr><td>Adminer PostgreSQL</td><td><a href="http://2.25.122.11:5050" target="_blank" class="td-url">2.25.122.11:5050</a></td></tr>
+    <tr><td>GitDiagram</td><td><a href="https://gitdiagram.com/josehelioaraujo/proposta-seguros" target="_blank" class="td-url">gitdiagram.com/josehelioaraujo/proposta-seguros</a></td></tr>
+  </table>
+</section>
+
+<!-- ROTEIRO -->
+<section id="roteiro">
+  <div class="section-label">// demonstração ao vivo</div>
+  <h2>Roteiro — 10 minutos</h2>
+  <p>Siga esta sequência. Mostre o pipeline antes do código — comunica qualidade imediatamente.</p>
+
+  <table>
+    <tr><th>#</th><th>O que mostrar</th><th>Por quê impressiona</th></tr>
+    <tr><td>1</td><td>README no GitHub</td><td>Badges, diagrama, link E2E — visão geral imediata</td></tr>
+    <tr><td>2</td><td>GitDiagram interativo</td><td>Navegação visual pelo código — diferencial raro</td></tr>
+    <tr><td>3</td><td>Pipeline CI/CD verde</td><td>Prova de qualidade automatizada</td></tr>
+    <tr><td>4</td><td>Relatório E2E ao vivo</td><td>5 requests · 9 assertions · 0 falhas em produção real</td></tr>
+    <tr><td>5</td><td>Health Checks /health</td><td>postgres + rabbitmq Healthy</td></tr>
+    <tr><td>6</td><td>Endpoint /info</td><td>Versão, commit SHA, data de build — rastreabilidade</td></tr>
+    <tr><td>7</td><td>Swagger — criar proposta</td><td>Fluxo de negócio ao vivo</td></tr>
+    <tr><td>8</td><td>Swagger — contratar</td><td>Comunicação entre serviços</td></tr>
+    <tr><td>9</td><td>Adminer — ver registros</td><td>Persistência real no PostgreSQL</td></tr>
+    <tr><td>10</td><td>RabbitMQ — ver evento</td><td>PropostaContratadaEvent na fila</td></tr>
+    <tr><td>11</td><td>SonarCloud — qualidade</td><td>0 bugs · análise automática</td></tr>
+    <tr><td>12</td><td>dotnet test — 13/13</td><td>Fecha mostrando que os testes rodam sem Docker</td></tr>
+  </table>
+</section>
+
+<!-- CHECKLIST -->
+<section id="checklist">
+  <div class="section-label">// antes de entrar na reunião</div>
+  <h2>Checklist Final</h2>
+  <p>Clique para marcar cada item. Só entre na apresentação com tudo verde.</p>
+
+  <div class="checklist">
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">VPS respondendo — <code style="font-family:var(--mono);font-size:0.8rem">curl http://2.25.122.11:5001/health</code></span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">PostgreSQL habilitado — <code style="font-family:var(--mono);font-size:0.8rem">./scripts/set-banco.sh --enable</code></span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">RabbitMQ habilitado — <code style="font-family:var(--mono);font-size:0.8rem">./scripts/set-rabbitmq.sh --enable</code></span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">Pipeline verde no GitHub Actions</span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">Relatório E2E atualizado — josehelioaraujo.github.io/proposta-seguros</span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">Adminer acessível — <code style="font-family:var(--mono);font-size:0.8rem">./scripts/set-adminer.sh --enable</code></span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">13/13 testes passando — <code style="font-family:var(--mono);font-size:0.8rem">dotnet test proposta-seguros.sln</code></span>
+    </div>
+    <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <span class="check-label">Este guia lido pelo menos uma vez</span>
+    </div>
+  </div>
+</section>
+
+<!-- FRASES -->
+<section id="frases">
+  <div class="section-label">// para encerrar com impacto</div>
+  <h2>Frases de Fechamento</h2>
+  <p>Use uma destas para encerrar. Clique para copiar.</p>
+
+  <div class="frases">
+    <div class="frase" onclick="copyFrase(this)">
+      "A Arquitetura Hexagonal aqui não é cargo cult — os 13 testes unitários rodam sem Docker. Isso é a evidência."
+      <small>→ clique para copiar</small>
+    </div>
+    <div class="frase" onclick="copyFrase(this)">
+      "Optei por VPS real em vez de ambiente local para aproximar o projeto de produção — provisionamento, SSH e Docker em servidor Linux fazem parte do dia a dia."
+      <small>→ clique para copiar</small>
+    </div>
+    <div class="frase" onclick="copyFrase(this)">
+      "O NullEventPublisher é uma decisão de resiliência, não de preguiça. A API funciona sem RabbitMQ — e eu sei exatamente o que perdemos com essa escolha."
+      <small>→ clique para copiar</small>
+    </div>
+    <div class="frase" onclick="copyFrase(this)">
+      "O pipeline garante que nenhum código com teste quebrado chega à VPS. O deploy é consequência de qualidade — não o contrário."
+      <small>→ clique para copiar</small>
+    </div>
+    <div class="frase" onclick="copyFrase(this)">
+      "Optei por Dapper e SQL explícito para demonstrar que entendo o que acontece no banco. Em produção, a escolha depende do caso de uso — não é dogma."
+      <small>→ clique para copiar</small>
+    </div>
+  </div>
+</section>
+
+<footer>
+  proposta-seguros · Helio Araujo · 2026 · documento privado
+</footer>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+  });
+
+  // Nav active
+  const sections = document.querySelectorAll('section');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(s => observer.observe(s));
+
+  // QA toggle
+  function toggleQA(el) {
+    el.classList.toggle('open');
+    const answer = el.nextElementSibling;
+    answer.classList.toggle('visible');
+  }
+
+  // Checklist
+  function toggleCheck(el) {
+    el.classList.toggle('done');
+  }
+
+  // Copy frase
+  function copyFrase(el) {
+    const text = el.childNodes[0].textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const small = el.querySelector('small');
+      small.textContent = '✓ copiado!';
+      setTimeout(() => small.textContent = '→ clique para copiar', 2000);
+    });
+  }
+</script>
+</body>
+</html>

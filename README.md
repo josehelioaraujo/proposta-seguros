@@ -8,6 +8,9 @@
 > 📊 **[Ver Relatório de Testes E2E ao vivo →](https://josehelioaraujo.github.io/proposta-seguros/)**  
 > Gerado automaticamente após cada deploy via Newman + GitHub Pages.
 
+> 🎯 **[Ver Apresentação do Projeto →](https://htmlpreview.github.io/?https://github.com/josehelioaraujo/proposta-seguros/blob/main/docs/apresentacao.html)**  
+> Visão geral interativa — arquitetura, pipeline, roteiro de demonstração e checklist.
+
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
 
