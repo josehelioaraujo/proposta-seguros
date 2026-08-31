@@ -423,7 +423,7 @@
     <li><a href="#pipeline">Pipeline</a></li>
     <li><a href="#roteiro">Roteiro</a></li>
     <li><a href="#checklist">Checklist</a></li>
-    <li><a href="#frases">Frases</a></li>
+ 
   </ul>
 </nav>
 
@@ -598,11 +598,10 @@
 <!-- ROTEIRO -->
 <section id="roteiro">
   <div class="section-label">// demonstração ao vivo</div>
-  <h2>Roteiro — 10 minutos</h2>
-  <p>Siga esta sequência. Mostre o pipeline antes do código — comunica qualidade imediatamente.</p>
-
+  <h2>Roteiro — Sequência da apresentação</h2>
+ 
   <table>
-    <tr><th>#</th><th>O que mostrar</th><th>Por quê impressiona</th></tr>
+    <tr><th>#</th><th>O que mostrar</th><th>Itens</th></tr>
     <tr><td>1</td><td>README no GitHub</td><td>Badges, diagrama, link E2E — visão geral imediata</td></tr>
     <tr><td>2</td><td>GitDiagram interativo</td><td>Navegação visual pelo código — diferencial raro</td></tr>
     <tr><td>3</td><td>Pipeline CI/CD verde</td><td>Prova de qualidade automatizada</td></tr>
@@ -618,50 +617,10 @@
   </table>
 </section>
 
-<!-- CHECKLIST -->
-<section id="checklist">
-  <div class="section-label">// antes de entrar na reunião</div>
-  <h2>Checklist Final</h2>
-  <p>Clique para marcar cada item. Só entre na apresentação com tudo verde.</p>
-
-  <div class="checklist">
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">VPS respondendo — <code style="font-family:var(--mono);font-size:0.8rem">curl http://2.25.122.11:5001/health</code></span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">PostgreSQL habilitado — <code style="font-family:var(--mono);font-size:0.8rem">./scripts/set-banco.sh --enable</code></span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">RabbitMQ habilitado — <code style="font-family:var(--mono);font-size:0.8rem">./scripts/set-rabbitmq.sh --enable</code></span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">Pipeline verde no GitHub Actions</span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">Relatório E2E atualizado — josehelioaraujo.github.io/proposta-seguros</span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">Adminer acessível — <code style="font-family:var(--mono);font-size:0.8rem">./scripts/set-adminer.sh --enable</code></span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">13/13 testes passando — <code style="font-family:var(--mono);font-size:0.8rem">dotnet test proposta-seguros.sln</code></span>
-    </div>
-    <div class="check-item" onclick="toggleCheck(this)">
-      <div class="check-box">✓</div>
-      <span class="check-label">Este guia lido pelo menos uma vez</span>
-    </div>
-  </div>
-</section>
+ 
 
 <footer>
-  proposta-seguros · Helio Andrade · 2026 · documento apresentação projeto proposta de seguros
+  proposta-seguros · Helio Andrade · 2026 · documento de apresentação
 </footer>
 
 <script>
