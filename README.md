@@ -16,40 +16,135 @@
 
 <br>
 
-**APIs — Swagger**
+> ✅ **Na VPS todos os serviços já estão habilitados** — PostgreSQL, RabbitMQ e Adminer. Acesso imediato sem configuração adicional.
+
+| Serviço | Status | Porta |
+|---------|--------|-------|
+| PropostaService | ✅ Habilitado | 5001 |
+| ContratacaoService | ✅ Habilitado | 5002 |
+| PostgreSQL | ✅ Habilitado | 5432 |
+| RabbitMQ | ✅ Habilitado | 5672 / 15672 |
+| Adminer | ✅ Habilitado | 5050 |
+
+<details>
+<summary>Scripts para habilitar/desabilitar serviços</summary>
+
+```bash
+# PostgreSQL
+./scripts/set-banco.sh --enable
+./scripts/set-banco.sh --disable
+
+# RabbitMQ
+./scripts/set-rabbitmq.sh --enable
+./scripts/set-rabbitmq.sh --disable
+
+# Adminer
+./scripts/set-adminer.sh --enable
+./scripts/set-adminer.sh --disable
+
+# Verificar status atual
+./scripts/status.sh
+```
+
+</details>
+
+**APIs — VPS Hostinger**
 
 | Serviço | URL |
 |---------|-----|
-| PropostaService | http://2.25.122.11:5001 |
-| ContratacaoService | http://2.25.122.11:5002 |
+| PropostaService — Swagger | http://2.25.122.11:5001 |
+| PropostaService — Health | http://2.25.122.11:5001/health |
+| PropostaService — Info | http://2.25.122.11:5001/info |
+| ContratacaoService — Swagger | http://2.25.122.11:5002 |
+| ContratacaoService — Health | http://2.25.122.11:5002/health |
+| ContratacaoService — Info | http://2.25.122.11:5002/info |
+| RabbitMQ — Painel | http://2.25.122.11:15672 |
 
-**Health Checks e Versionamento**
+**APIs — Local**
 
-| Endpoint | PropostaService | ContratacaoService |
-|----------|----------------|-------------------|
-| `/health` | http://2.25.122.11:5001/health | http://2.25.122.11:5002/health |
-| `/health/live` | http://2.25.122.11:5001/health/live | http://2.25.122.11:5002/health/live |
-| `/info` | http://2.25.122.11:5001/info | http://2.25.122.11:5002/info |
+| Serviço | URL |
+|---------|-----|
+| PropostaService — Swagger | http://localhost:5001 |
+| PropostaService — Health | http://localhost:5001/health |
+| PropostaService — Info | http://localhost:5001/info |
+| ContratacaoService — Swagger | http://localhost:5002 |
+| ContratacaoService — Health | http://localhost:5002/health |
+| ContratacaoService — Info | http://localhost:5002/info |
+| RabbitMQ — Painel | http://localhost:15672 |
+
+---
 
 **Adminer — PostgreSQL**
 
-URL: http://2.25.122.11:5050
+Interface web para visualizar e consultar o banco de dados PostgreSQL.
+
+> Na VPS já está habilitado. Para habilitar localmente:
+> ```bash
+> ./scripts/set-adminer.sh --enable
+> ```
 
 | Campo | Valor |
 |-------|-------|
+| URL | http://2.25.122.11:5050 |
 | Sistema | `PostgreSQL` |
 | Servidor | `postgres` |
 | Usuário | `postgres` |
 | Senha | `postgres` |
 | Base de dados | `seguros_db` |
 
-> Habilitar antes de acessar: `./scripts/set-adminer.sh --enable`
+Tabelas disponíveis:
+
+```
+seguros_db
+├── proposta.propostas       — propostas de seguro criadas
+└── contratacao.contratacoes — contratações realizadas
+```
+
+---
 
 **RabbitMQ — Painel de Gerenciamento**
 
-URL: http://2.25.122.11:15672 — usuário: `guest` / senha: `guest`
+Interface web nativa do RabbitMQ para monitorar filas e mensagens.
 
-> Para visualizar eventos: Queues → `proposta.contratada.queue` → Get messages
+> Na VPS já está habilitado. Para habilitar localmente:
+> ```bash
+> ./scripts/set-rabbitmq.sh --enable
+> ```
+
+| Campo | Valor |
+|-------|-------|
+| URL | http://2.25.122.11:15672 |
+| Usuário | `guest` |
+| Senha | `guest` |
+
+O que monitorar após rodar o fluxo com RabbitMQ:
+
+```
+Queues and Streams
+└── proposta.contratada.queue
+    ├── Messages ready   — mensagens aguardando consumidor
+    ├── Message rates    — taxa de publicação
+    └── Get messages     — visualiza o conteúdo do evento
+```
+
+Para ver o conteúdo de uma mensagem:
+
+```
+Queues → proposta.contratada.queue
+→ Get messages → Ackmode: Nack → Get Message(s)
+```
+
+Conteúdo esperado:
+
+```json
+{
+  "ContratacaoId":   "48988e73-6c65-46f6-b10d-8b8352111df2",
+  "PropostaId":      "c13f6050-1426-48f9-83ae-41d7133fa7ba",
+  "Cpf":             "120.147.173-70",
+  "DataContratacao": "2026-08-30T00:54:47",
+  "OcorridoEm":      "2026-08-30T00:54:47"
+}
+```
 
 </details>
 
@@ -262,34 +357,6 @@ dotnet run
 cd src/ContratacaoService/ContratacaoService.Api
 dotnet run
 ```
-
----
-
-## URLs
-
-### VPS Hostinger
-
-| Serviço | URL |
-|---|---|
-| PropostaService — Swagger | http://2.25.122.11:5001 |
-| PropostaService — Health | http://2.25.122.11:5001/health |
-| PropostaService — Info | http://2.25.122.11:5001/info |
-| ContratacaoService — Swagger | http://2.25.122.11:5002 |
-| ContratacaoService — Health | http://2.25.122.11:5002/health |
-| ContratacaoService — Info | http://2.25.122.11:5002/info |
-| RabbitMQ — Painel | http://2.25.122.11:15672 |
-
-### Local
-
-| Serviço | URL |
-|---|---|
-| PropostaService — Swagger | http://localhost:5001 |
-| PropostaService — Health | http://localhost:5001/health |
-| PropostaService — Info | http://localhost:5001/info |
-| ContratacaoService — Swagger | http://localhost:5002 |
-| ContratacaoService — Health | http://localhost:5002/health |
-| ContratacaoService — Info | http://localhost:5002/info |
-| RabbitMQ — Painel | http://localhost:15672 |
 
 ---
 
@@ -849,79 +916,3 @@ neste projeto — em produção real seriam processadas imediatamente.
 </details>
 
 ---
-
-
-<details>
-<summary><strong>Painéis Administrativos</strong></summary>
-
-### Adminer — PostgreSQL
-
-Interface web para visualizar e consultar o banco de dados PostgreSQL.
-
-```bash
-# Sobe o Adminer
-./scripts/set-adminer.sh --enable
-
-# Para o Adminer
-./scripts/set-adminer.sh --disable
-```
-
-```
-URL:      http://2.25.122.11:5050
-Sistema:  PostgreSQL
-Servidor: postgres
-Usuário:  postgres
-Senha:    postgres
-Banco:    seguros_db
-```
-
-Tabelas disponíveis:
-
-```
-seguros_db
-├── proposta.propostas       — propostas de seguro criadas
-└── contratacao.contratacoes — contratações realizadas
-```
-
----
-
-### RabbitMQ Management — Mensageria
-
-Interface web nativa do RabbitMQ para monitorar filas e mensagens.
-
-```
-URL:     http://2.25.122.11:15672
-Usuário: guest
-Senha:   guest
-```
-
-O que monitorar após rodar o fluxo com RabbitMQ habilitado:
-
-```
-Queues and Streams
-└── proposta.contratada.queue
-    ├── Messages ready   — mensagens aguardando consumidor
-    ├── Message rates    — taxa de publicação
-    └── Get messages     — visualiza o conteúdo do evento
-```
-
-Para ver o conteúdo de uma mensagem:
-
-```
-Queues → proposta.contratada.queue
-→ Get messages → Ackmode: Nack → Get Message(s)
-```
-
-Conteúdo esperado:
-
-```json
-{
-  "ContratacaoId":   "48988e73-6c65-46f6-b10d-8b8352111df2",
-  "PropostaId":      "c13f6050-1426-48f9-83ae-41d7133fa7ba",
-  "Cpf":             "120.147.173-70",
-  "DataContratacao": "2026-08-30T00:54:47",
-  "OcorridoEm":      "2026-08-30T00:54:47"
-}
-```
-
-</details>
