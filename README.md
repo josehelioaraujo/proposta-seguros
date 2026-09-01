@@ -11,6 +11,50 @@
 > 🎯 **[Ver Apresentação do Projeto →](https://htmlpreview.github.io/?https://github.com/josehelioaraujo/proposta-seguros/blob/main/docs/apresentacao.html)**  
 > Visão geral interativa — arquitetura, pipeline, roteiro de demonstração e checklist.
 
+<details>
+<summary><strong>🔗 Acesso Rápido — URLs e Painéis Administrativos</strong></summary>
+
+<br>
+
+**APIs — Swagger**
+
+| Serviço | URL |
+|---------|-----|
+| PropostaService | http://2.25.122.11:5001 |
+| ContratacaoService | http://2.25.122.11:5002 |
+
+**Health Checks e Versionamento**
+
+| Endpoint | PropostaService | ContratacaoService |
+|----------|----------------|-------------------|
+| `/health` | http://2.25.122.11:5001/health | http://2.25.122.11:5002/health |
+| `/health/live` | http://2.25.122.11:5001/health/live | http://2.25.122.11:5002/health/live |
+| `/info` | http://2.25.122.11:5001/info | http://2.25.122.11:5002/info |
+
+**Adminer — PostgreSQL**
+
+URL: http://2.25.122.11:5050
+
+| Campo | Valor |
+|-------|-------|
+| Sistema | `PostgreSQL` |
+| Servidor | `postgres` |
+| Usuário | `postgres` |
+| Senha | `postgres` |
+| Base de dados | `seguros_db` |
+
+> Habilitar antes de acessar: `./scripts/set-adminer.sh --enable`
+
+**RabbitMQ — Painel de Gerenciamento**
+
+URL: http://2.25.122.11:15672 — usuário: `guest` / senha: `guest`
+
+> Para visualizar eventos: Queues → `proposta.contratada.queue` → Get messages
+
+</details>
+
+
+
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
 
