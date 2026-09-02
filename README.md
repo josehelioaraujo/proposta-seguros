@@ -169,6 +169,9 @@ O sistema é composto por dois microserviços independentes:
 > 🔍 **[Abrir diagrama interativo e navegável →](https://gitdiagram.com/josehelioaraujo/proposta-seguros)**  
 > Gerado automaticamente pelo GitDiagram — clique nos componentes para navegar pelo código.
 
+> 🗺️ **[Explorar grafo de dependências do código →](https://codegraphcontext.vercel.app/josehelioaraujo/proposta-seguros)**  
+> Visualização do grafo de contexto e dependências entre classes e módulos do projeto.
+
 ---
 
 ## Diagrama Arquitetural
@@ -916,3 +919,5 @@ neste projeto — em produção real seriam processadas imediatamente.
 </details>
 
 ---
+
+
