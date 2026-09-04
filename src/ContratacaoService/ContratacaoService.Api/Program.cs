@@ -6,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
+using ContratacaoService.Api.Mcp;
 using ContratacaoService.Application.Extensions;
 using ContratacaoService.Infrastructure.Extensions;
 
@@ -34,24 +35,21 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// OpenTelemetry — Distributed Tracing
-var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
-    ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")
+// OpenTelemetry
+var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")
     ?? "http://jaeger:4317";
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
-        .SetResourceBuilder(ResourceBuilder.CreateDefault()
-            .AddService("contratacao-api"))
-        .AddAspNetCoreInstrumentation(opts =>
-        {
-            opts.RecordException = true;
-        })
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("contratacao-api"))
+        .AddAspNetCoreInstrumentation(opts => { opts.RecordException = true; })
         .AddHttpClientInstrumentation()
-        .AddOtlpExporter(opts =>
-        {
-            opts.Endpoint = new Uri(otlpEndpoint);
-        }));
+        .AddOtlpExporter(opts => { opts.Endpoint = new Uri(otlpEndpoint); }));
+
+// MCP Server
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithTools<ContratacaoMcpAdapter>();
 
 // Health Checks
 var usarBancoDados = builder.Configuration.GetValue<bool>("Features:UsarBancoDados");
@@ -91,29 +89,26 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-// Prometheus
 app.UseHttpMetrics();
-
 app.MapControllers();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
-
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate      = check => check.Tags.Contains("live"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
-
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate      = check => check.Tags.Contains("ready") || check.Tags.Contains("db") || check.Tags.Contains("mq"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-// Prometheus endpoint
-app.MapMetrics();
+// MCP endpoint
+app.MapMcp("/mcp");
 
+app.MapMetrics();
 app.Run();
