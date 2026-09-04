@@ -32,12 +32,20 @@ services:
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=seguros_db;Username=postgres;Password=postgres"
       Features__UsarBancoDados: ${USAR_BANCO_DADOS:-false}
       Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+      OTEL_SERVICE_NAME: "proposta-api"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - seguros-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
 
   contratacao-api:
     build:
@@ -53,6 +61,8 @@ services:
       Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
       Services__PropostaService: "http://proposta-api:5001"
       RabbitMQ__Host: seguros-rabbitmq
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+      OTEL_SERVICE_NAME: "contratacao-api"
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +71,12 @@ services:
     networks:
       - seguros-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
@@ -95,7 +111,6 @@ services:
 
   # ---------------------------------------------------------------------------
   # Observability — profile: monitoring
-  # Subir: docker compose --profile monitoring up -d
   # ---------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:latest
@@ -117,6 +132,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
     volumes:
       - grafana_data:/var/lib/grafana
       - ./observability/grafana/datasources:/etc/grafana/provisioning/datasources:ro
@@ -131,11 +147,56 @@ services:
       - monitoring
     restart: unless-stopped
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: seguros-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    networks:
+      - seguros-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:latest
+    container_name: seguros-loki
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - seguros-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: seguros-promtail
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ./observability/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - seguros-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   rabbitmq_data:
   prometheus_data:
   grafana_data:
+  loki_data:
 
 networks:
   seguros-network:

@@ -3,6 +3,8 @@ using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Prometheus;
 using PropostaService.Application.Extensions;
 using PropostaService.Infrastructure.Extensions;
@@ -32,6 +34,25 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// OpenTelemetry — Distributed Tracing
+var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+    ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")
+    ?? "http://jaeger:4317";
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(ResourceBuilder.CreateDefault()
+            .AddService("proposta-api"))
+        .AddAspNetCoreInstrumentation(opts =>
+        {
+            opts.RecordException = true;
+        })
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter(opts =>
+        {
+            opts.Endpoint = new Uri(otlpEndpoint);
+        }));
+
 // Health Checks
 var usarBancoDados = builder.Configuration.GetValue<bool>("Features:UsarBancoDados");
 
@@ -40,7 +61,6 @@ var healthChecks = builder.Services.AddHealthChecks()
         HealthCheckResult.Healthy("Proposta de Seguros API — online"),
         tags: ["live"]);
 
-// Postgres — so monitora se banco estiver habilitado
 if (usarBancoDados)
 {
     healthChecks.AddNpgSql(
@@ -58,12 +78,11 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-// Prometheus — coleta metricas HTTP automaticamente
+// Prometheus
 app.UseHttpMetrics();
 
 app.MapControllers();
 
-// Health Check Endpoints
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
@@ -81,7 +100,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-// Prometheus — endpoint /metrics
+// Prometheus endpoint
 app.MapMetrics();
 
 app.Run();

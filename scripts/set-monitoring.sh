@@ -1,5 +1,5 @@
-#!/bin/bash
-# set-monitoring.sh — habilita ou desabilita Prometheus + Grafana
+﻿#!/bin/bash
+# set-monitoring.sh — habilita ou desabilita stack de observabilidade
 # Uso: ./set-monitoring.sh --enable | --disable
 
 set -e
@@ -8,16 +8,20 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 case "$1" in
   --enable)
-    echo "[monitoring] Subindo Prometheus + Grafana..."
-    docker compose -f "$ROOT_DIR/docker-compose.yml" --profile monitoring up -d prometheus grafana
+    echo "[monitoring] Subindo stack de observabilidade..."
+    docker compose -f "$ROOT_DIR/docker-compose.yml" --profile monitoring up -d prometheus grafana jaeger loki promtail
     IP=$(hostname -I | awk '{print $1}')
-    echo "[monitoring] Prometheus : http://$IP:9090"
-    echo "[monitoring] Grafana    : http://$IP:3000  (admin/admin)"
+    echo ""
+    echo "  Prometheus : http://$IP:9090"
+    echo "  Grafana    : http://$IP:3000  (admin/admin)"
+    echo "  Jaeger     : http://$IP:16686"
+    echo "  Loki       : http://$IP:3100"
+    echo ""
     ;;
   --disable)
-    echo "[monitoring] Parando Prometheus + Grafana..."
-    docker compose -f "$ROOT_DIR/docker-compose.yml" --profile monitoring stop prometheus grafana
-    docker compose -f "$ROOT_DIR/docker-compose.yml" --profile monitoring rm -f prometheus grafana
+    echo "[monitoring] Parando stack de observabilidade..."
+    docker compose -f "$ROOT_DIR/docker-compose.yml" --profile monitoring stop prometheus grafana jaeger loki promtail
+    docker compose -f "$ROOT_DIR/docker-compose.yml" --profile monitoring rm -f prometheus grafana jaeger loki promtail
     echo "[monitoring] Servicos parados."
     ;;
   *)
