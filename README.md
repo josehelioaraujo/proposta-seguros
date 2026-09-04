@@ -5,8 +5,18 @@
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 
-Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
-utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
+
+## Introdução
+
+Sistema de gerenciamento de propostas de seguro desenvolvido com **Arquitetura Hexagonal (Ports & Adapters)**, **.NET 10** e **PostgreSQL**, composto por dois microserviços independentes que se comunicam via HTTP REST e mensageria assíncrona com RabbitMQ.
+
+O **PropostaService** gerencia o ciclo de vida das propostas — criação, consulta e alteração de status (Em Análise → Aprovada / Rejeitada). O **ContratacaoService** efetua a contratação de propostas aprovadas, consultando o PropostaService via HTTP, persistindo a contratação e publicando o evento `PropostaContratadaEvent` no RabbitMQ para consumo por serviços downstream (apólice, cobrança, notificação, SUSEP).
+
+Ambos os serviços operam em dois modos intercambiáveis via feature flag — **InMemory** para desenvolvimento e **PostgreSQL via Dapper** para produção — sem alteração de código, demonstrando o padrão Ports & Adapters na prática.
+
+O projeto vai além do enunciado original com pipeline CI/CD completo, testes de integração com Testcontainers, smoke tests E2E via Newman, deploy automatizado em VPS real, stack completa de observabilidade (Prometheus, Grafana, Jaeger, Loki) e **MCP Server** expondo as operações das APIs como tools para agentes de IA.
+
+---
 
 ## Visão Geral
 
@@ -121,6 +131,10 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 - Docker / Docker Compose
 - Swagger / OpenAPI 3.0
 - ASP.NET Health Checks
+- Prometheus + Grafana (métricas e dashboards)
+- Jaeger + OpenTelemetry (distributed tracing)
+- Loki + Promtail (agregação de logs)
+- ModelContextProtocol.AspNetCore (MCP Server)
 
 ---
 
@@ -438,7 +452,221 @@ Fila:    proposta.contratada.queue
 
 ---
 
-## Bônus
+---
+
+## Observabilidade
+
+Stack completa de observabilidade rodando em produção — métricas, logs e traces distribuídos, integrada e acessível via browser.
+
+<details>
+<summary><strong>📊 Prometheus — Coleta de Métricas</strong></summary>
+
+<br>
+
+Coleta métricas das duas APIs a cada 15 segundos via scrape no endpoint `/metrics`. Armazena séries temporais e responde queries PromQL.
+
+**Métricas de negócio instrumentadas:**
+
+| Métrica | Descrição |
+|---|---|
+| `propostas_criadas_total` | Total de propostas criadas |
+| `propostas_aprovadas_total` | Total de propostas aprovadas |
+| `propostas_rejeitadas_total` | Total de propostas rejeitadas |
+| `contratacoes_realizadas_total` | Total de contratações realizadas |
+| `rabbitmq_eventos_publicados_total` | Total de eventos publicados no RabbitMQ |
+
+**Métricas de infra — automáticas via `prometheus-net`:**
+- Requisições HTTP por segundo por endpoint e status code
+- Latência HTTP (histograma — p50, p90, p99)
+
+**Exemplos de queries PromQL:**
+
+```promql
+propostas_criadas_total
+propostas_aprovadas_total / clamp_min(propostas_criadas_total, 1) * 100
+rate(http_requests_received_total[1m])
+histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[1m]))
+```
+
+</details>
+
+<details>
+<summary><strong>📈 Grafana — Dashboards</strong></summary>
+
+<br>
+
+Dashboard **Proposta de Seguros** provisionado automaticamente com 10 painéis — métricas de negócio, latência HTTP, eventos RabbitMQ, taxa de aprovação e logs em tempo real.
+
+Datasources provisionados automaticamente: Prometheus, Loki e Jaeger.
+
+| URL | Descrição |
+|---|---|
+| https://grafana.2.25.122.11.nip.io | Acesso HTTPS (certificado Let's Encrypt) |
+| http://2.25.122.11:3000 | Acesso direto HTTP |
+
+> HTTPS via Nginx + Let's Encrypt com certificado automático pelo domínio `nip.io`.
+
+</details>
+
+<details>
+<summary><strong>🔍 Jaeger — Distributed Tracing</strong></summary>
+
+<br>
+
+Rastreia o caminho completo de uma requisição entre os dois microserviços via OpenTelemetry. Zero alteração nos Use Cases — instrumentação automática de chamadas HTTP e HttpClient.
+
+**Exemplo de trace — `POST /api/Contratacoes`:**
+
+```
+contratacao-api: POST /api/Contratacoes          [342ms]
+  ├── Validação FluentValidation                  [2ms]
+  ├── Repository.GetByPropostaIdAsync             [8ms]
+  ├── HTTP GET proposta-api/api/Propostas/{id}   [298ms]
+  │     └── proposta-api: GET /api/Propostas/{id} [295ms]
+  └── Repository.AddAsync                         [9ms]
+```
+
+| URL | Descrição |
+|---|---|
+| http://2.25.122.11:16686 | UI do Jaeger |
+
+</details>
+
+<details>
+<summary><strong>📋 Loki — Agregação de Logs</strong></summary>
+
+<br>
+
+Agrega os logs dos containers Docker via Promtail e disponibiliza para consulta via LogQL no Grafana. Zero alteração no código — coleta automática via docker socket.
+
+```logql
+{service="proposta-api"}
+{service="contratacao-api"} |= "error"
+```
+
+Os painéis de logs estão integrados no dashboard do Grafana.
+
+</details>
+
+<details>
+<summary><strong>🔗 Resumo — URLs de Observabilidade</strong></summary>
+
+<br>
+
+| Ferramenta | URL | Descrição |
+|---|---|---|
+| **Grafana** | https://grafana.2.25.122.11.nip.io | Dashboards — métricas, logs e traces |
+| **Grafana** | http://2.25.122.11:3000 | Acesso direto HTTP |
+| **Prometheus** | http://2.25.122.11:9090 | Queries PromQL e status dos targets |
+| **Jaeger** | http://2.25.122.11:16686 | Distributed tracing |
+| **Loki** | http://2.25.122.11:3100 | API de logs (acesso via Grafana) |
+| **PropostaService /metrics** | http://2.25.122.11:5001/metrics | Endpoint raw Prometheus |
+| **ContratacaoService /metrics** | http://2.25.122.11:5002/metrics | Endpoint raw Prometheus |
+
+```bash
+./scripts/set-monitoring.sh --enable   # sobe Prometheus, Grafana, Jaeger, Loki, Promtail
+./scripts/set-monitoring.sh --disable  # para e remove os containers
+```
+
+</details>
+
+---
+
+## MCP Server
+
+Ambas as APIs expõem um **MCP Server** (Model Context Protocol), permitindo que agentes de IA como o Claude interajam diretamente com o sistema em linguagem natural — sem precisar construir requisições HTTP manualmente.
+
+<details>
+<summary><strong>🤖 Tools disponíveis</strong></summary>
+
+<br>
+
+**PropostaService** — `http://2.25.122.11:5001/mcp`
+
+| Tool | Descrição |
+|---|---|
+| `criar_proposta` | Cria uma nova proposta de seguro |
+| `listar_propostas` | Lista todas as propostas cadastradas |
+| `obter_proposta` | Obtém uma proposta pelo ID |
+| `alterar_status_proposta` | Altera o status de uma proposta (EmAnalise / Aprovada / Rejeitada) |
+
+**ContratacaoService** — `http://2.25.122.11:5002/mcp`
+
+| Tool | Descrição |
+|---|---|
+| `contratar_proposta` | Contrata uma proposta aprovada |
+| `obter_contratacao` | Obtém uma contratação pelo ID |
+
+</details>
+
+<details>
+<summary><strong>🧪 Testando com MCP Inspector</strong></summary>
+
+<br>
+
+O MCP Inspector é uma UI visual para explorar e executar as tools — equivalente ao Swagger para MCP.
+
+```bash
+# Requer Node.js instalado
+npx @modelcontextprotocol/inspector http://2.25.122.11:5001/mcp
+npx @modelcontextprotocol/inspector http://2.25.122.11:5002/mcp
+```
+
+Abre no browser em `http://localhost:6274` — conecta, seleciona a tool, preenche os parâmetros e executa.
+
+</details>
+
+<details>
+<summary><strong>🔌 Conectando ao Claude Desktop</strong></summary>
+
+<br>
+
+1. Abre o Claude Desktop → **Configurações → Conectores → Adicionar conector**
+2. Adiciona os dois servidores:
+
+| Nome | URL |
+|---|---|
+| Proposta Seguros | `http://2.25.122.11:5001/mcp` |
+| Contratacao Seguros | `http://2.25.122.11:5002/mcp` |
+
+3. Habilita os conectores na conversa
+4. Exemplos de uso em linguagem natural:
+
+```
+"Crie uma proposta para João Silva, CPF 123.456.789-09, tipo 2 (SeguroVidaFamiliar), valor 200"
+"Liste todas as propostas"
+"Aprove a proposta ID xxxx-xxxx"
+"Contrate a proposta ID xxxx-xxxx para o CPF 123.456.789-09"
+```
+
+</details>
+
+<details>
+<summary><strong>⚙️ Implementação</strong></summary>
+
+<br>
+
+O MCP Server é implementado como um **Adapter de entrada** na camada `Api` — padrão Ports & Adapters aplicado à comunicação com agentes de IA, da mesma forma que os Controllers REST são Adapters de entrada HTTP.
+
+```
+Agente IA → MCP /mcp → [PropostasMcpAdapter] → Use Cases → Domain
+HTTP REST → GET/POST → [PropostasController] → Use Cases → Domain
+```
+
+Pacote utilizado: `ModelContextProtocol.AspNetCore`
+
+Registro no `Program.cs`:
+```csharp
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithTools<PropostasMcpAdapter>();
+
+app.MapMcp("/mcp");
+```
+
+</details>
+
+## Destaques de Implementação
 
 ### RabbitMQ — Mensageria
 
