@@ -1,4 +1,4 @@
-﻿services:
+services:
 
   postgres:
     image: postgres:16-alpine
@@ -93,11 +93,50 @@
     profiles:
       - tools
 
+  # ---------------------------------------------------------------------------
+  # Observability — profile: monitoring
+  # Subir: docker compose --profile monitoring up -d
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: seguros-prometheus
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - seguros-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: seguros-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - seguros-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   rabbitmq_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   seguros-network:
     driver: bridge
-

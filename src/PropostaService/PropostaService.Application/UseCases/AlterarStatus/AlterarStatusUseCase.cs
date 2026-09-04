@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using PropostaService.Application.Metrics;
 using PropostaService.Application.UseCases.CriarProposta;
+
+using PropostaService.Domain.Enums;
 using PropostaService.Domain.Ports.Output;
 using PropostaService.Domain.Shared;
 
@@ -44,6 +47,11 @@ public class AlterarStatusUseCase
         proposta.AlterarStatus(request.NovoStatus);
         await _repository.UpdateAsync(proposta);
 
+        if (request.NovoStatus == PropostaStatus.Aprovada)
+            PropostaMetrics.PropostasAprovadas.Inc();
+        else if (request.NovoStatus == PropostaStatus.Rejeitada)
+            PropostaMetrics.PropostasRejeitadas.Inc();
+
         _logger.LogInformation(
             "Status alterado com sucesso â€” ID: {Id} | Status: {Status}",
             proposta.Id, proposta.Status);
@@ -51,3 +59,5 @@ public class AlterarStatusUseCase
         return Result<PropostaResponse>.Ok(PropostaResponse.FromEntity(proposta));
     }
 }
+
+

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ContratacaoService.Application.Metrics;
 using ContratacaoService.Domain.Entities;
 using ContratacaoService.Domain.Events;
 using ContratacaoService.Domain.Ports.Output;
@@ -31,7 +32,6 @@ public class ContratarPropostaUseCase
             "Iniciando contratacao — PropostaID: {PropostaId} | CPF: {Cpf}",
             request.PropostaId, request.Cpf);
 
-        // Idempotencia
         var existente = await _repository.GetByPropostaIdAsync(request.PropostaId);
         if (existente is not null)
         {
@@ -43,11 +43,6 @@ public class ContratarPropostaUseCase
                 "Ja existe uma contratacao para esta proposta.");
         }
 
-        // Busca proposta
-        _logger.LogInformation(
-            "Consultando PropostaService — PropostaID: {PropostaId}",
-            request.PropostaId);
-
         var proposta = await _propostaClient.ObterPropostaAsync(request.PropostaId);
         if (proposta is null)
         {
@@ -58,7 +53,6 @@ public class ContratarPropostaUseCase
             return Result<ContratacaoResponse>.NotFound("Proposta nao encontrada.");
         }
 
-        // Valida status
         if (proposta.Status != "Aprovada")
         {
             _logger.LogWarning(
@@ -69,21 +63,17 @@ public class ContratarPropostaUseCase
                 $"Proposta com status '{proposta.Status}' nao pode ser contratada. Status necessario: Aprovada.");
         }
 
-        // Cria contratacao
         var contratacao = Contratacao.Criar(request.PropostaId, request.Cpf);
         await _repository.AddAsync(contratacao);
+
+        ContratacaoMetrics.ContracoesRealizadas.Inc();
 
         _logger.LogInformation(
             "Contratacao realizada com sucesso — ID: {Id} | PropostaID: {PropostaId}",
             contratacao.Id, contratacao.PropostaId);
 
-        // Publica evento
         if (_eventPublisher is not null)
         {
-            _logger.LogInformation(
-                "Publicando evento PropostaContratadaEvent — ContratacaoID: {Id}",
-                contratacao.Id);
-
             var evento = new PropostaContratadaEvent(
                 ContratacaoId:   contratacao.Id,
                 PropostaId:      contratacao.PropostaId,

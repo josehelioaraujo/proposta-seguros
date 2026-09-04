@@ -1,0 +1,86 @@
+{
+  "annotations": { "list": [] },
+  "description": "POC Proposta de Seguros — Metricas em tempo real",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Propostas Criadas",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "propostas_criadas_total", "legendFormat": "Total", "datasource": "Prometheus" }],
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
+    },
+    {
+      "id": 2,
+      "title": "Propostas Aprovadas",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "propostas_aprovadas_total", "legendFormat": "Total", "datasource": "Prometheus" }],
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
+    },
+    {
+      "id": 3,
+      "title": "Propostas Rejeitadas",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "propostas_rejeitadas_total", "legendFormat": "Total", "datasource": "Prometheus" }],
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "red", "value": null }] } } }
+    },
+    {
+      "id": 4,
+      "title": "Contratacoes Realizadas",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "contratacoes_realizadas_total", "legendFormat": "Total", "datasource": "Prometheus" }],
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } } }
+    },
+    {
+      "id": 5,
+      "title": "Requisicoes HTTP por Segundo",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [{ "expr": "rate(http_requests_received_total[1m])", "legendFormat": "{{job}} - {{code}}", "datasource": "Prometheus" }],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 6,
+      "title": "Latencia HTTP p99 (segundos)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [{ "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[1m]))", "legendFormat": "p99 {{job}}", "datasource": "Prometheus" }],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 7,
+      "title": "Eventos RabbitMQ Publicados",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 12 },
+      "targets": [{ "expr": "rate(rabbitmq_eventos_publicados_total[1m])", "legendFormat": "Eventos/s", "datasource": "Prometheus" }],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 8,
+      "title": "Taxa de Aprovacao (%)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 12 },
+      "targets": [{ "expr": "propostas_aprovadas_total / clamp_min(propostas_criadas_total, 1) * 100", "legendFormat": "Aprovacao %", "datasource": "Prometheus" }],
+      "options": { "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "unit": "percent", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 50 }, { "color": "green", "value": 80 }] } } }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["proposta-seguros", "microservices", "dotnet"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "title": "Proposta de Seguros",
+  "uid": "proposta-seguros-001",
+  "version": 1
+}

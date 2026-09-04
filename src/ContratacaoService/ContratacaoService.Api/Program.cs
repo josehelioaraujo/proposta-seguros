@@ -1,8 +1,9 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Prometheus;
 using ContratacaoService.Application.Extensions;
 using ContratacaoService.Infrastructure.Extensions;
 
@@ -71,6 +72,9 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
+// Prometheus — coleta metricas HTTP automaticamente
+app.UseHttpMetrics();
+
 app.MapControllers();
 
 // Health Check Endpoints
@@ -91,5 +95,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-app.Run();
+// Prometheus — endpoint /metrics
+app.MapMetrics();
 
+app.Run();

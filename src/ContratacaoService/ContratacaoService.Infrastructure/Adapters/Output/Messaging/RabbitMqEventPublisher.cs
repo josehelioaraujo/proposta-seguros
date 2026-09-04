@@ -1,6 +1,7 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using ContratacaoService.Domain.Ports.Output;
+using ContratacaoService.Infrastructure.Metrics;
 using ContratacaoService.Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -69,7 +70,7 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(
-                "RabbitMQ indisponivel  evento nao publicado. Erro: {Erro}", ex.Message);
+                "RabbitMQ indisponivel — evento nao publicado. Erro: {Erro}", ex.Message);
             return false;
         }
         finally
@@ -101,8 +102,10 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
             basicProperties: props,
             body:            body);
 
+        RabbitMqMetrics.EventosPublicados.Inc();
+
         _logger.LogInformation(
-            "Evento publicado  Exchange: {Exchange} | RoutingKey: {RoutingKey}",
+            "Evento publicado — Exchange: {Exchange} | RoutingKey: {RoutingKey}",
             exchange, routingKey);
     }
 
