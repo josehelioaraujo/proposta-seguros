@@ -163,8 +163,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
+      # appleboy/ssh-action@v1.2.0 — corrige vulnerabilidade SSH.NET (GHSA-q939-rpr3-3284)
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: 2.25.122.11
           username: root
@@ -177,12 +178,12 @@ jobs:
             BUILD_COMMIT=$(git rev-parse --short HEAD)
             BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-            docker compose build \
+            docker compose --profile monitoring build \
               --build-arg BUILD_VERSION=$BUILD_VERSION \
               --build-arg BUILD_COMMIT=$BUILD_COMMIT \
               --build-arg BUILD_DATE=$BUILD_DATE
 
-            docker compose up -d
+            docker compose --profile monitoring up -d
 
             echo "Deploy concluido - versao $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
 
