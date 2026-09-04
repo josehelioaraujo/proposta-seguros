@@ -1,154 +1,9 @@
 # Proposta de Seguros
 
 [![CI/CD](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=alert_status)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
-[![Evidências E2E](https://img.shields.io/badge/Testes%20E2E-Postman%20%7C%20Newman-orange)](https://josehelioaraujo.github.io/proposta-seguros/)
-
-> 📊 **[Ver Relatório de Testes E2E ao vivo →](https://josehelioaraujo.github.io/proposta-seguros/)**  
-> Gerado automaticamente após cada deploy via Newman + GitHub Pages.
-
-> 🎯 **[Ver Apresentação do Projeto →](https://htmlpreview.github.io/?https://github.com/josehelioaraujo/proposta-seguros/blob/main/docs/apresentacao.html)**  
-> Visão geral interativa — arquitetura, pipeline, roteiro de demonstração e checklist.
-
-<details>
-<summary><strong>🔗 Acesso Rápido — URLs e Painéis Administrativos</strong></summary>
-
-<br>
-
-> ✅ **Na VPS todos os serviços já estão habilitados** — PostgreSQL, RabbitMQ e Adminer. Acesso imediato sem configuração adicional.
-
-| Serviço | Status | Porta |
-|---------|--------|-------|
-| PropostaService | ✅ Habilitado | 5001 |
-| ContratacaoService | ✅ Habilitado | 5002 |
-| PostgreSQL | ✅ Habilitado | 5432 |
-| RabbitMQ | ✅ Habilitado | 5672 / 15672 |
-| Adminer | ✅ Habilitado | 5050 |
-
-<details>
-<summary>Scripts para habilitar/desabilitar serviços</summary>
-
-```bash
-# PostgreSQL
-./scripts/set-banco.sh --enable
-./scripts/set-banco.sh --disable
-
-# RabbitMQ
-./scripts/set-rabbitmq.sh --enable
-./scripts/set-rabbitmq.sh --disable
-
-# Adminer
-./scripts/set-adminer.sh --enable
-./scripts/set-adminer.sh --disable
-
-# Verificar status atual
-./scripts/status.sh
-```
-
-</details>
-
-**APIs — VPS Hostinger**
-
-| Serviço | URL |
-|---------|-----|
-| PropostaService — Swagger | http://2.25.122.11:5001 |
-| PropostaService — Health | http://2.25.122.11:5001/health |
-| PropostaService — Info | http://2.25.122.11:5001/info |
-| ContratacaoService — Swagger | http://2.25.122.11:5002 |
-| ContratacaoService — Health | http://2.25.122.11:5002/health |
-| ContratacaoService — Info | http://2.25.122.11:5002/info |
-| RabbitMQ — Painel | http://2.25.122.11:15672 |
-
-**APIs — Local**
-
-| Serviço | URL |
-|---------|-----|
-| PropostaService — Swagger | http://localhost:5001 |
-| PropostaService — Health | http://localhost:5001/health |
-| PropostaService — Info | http://localhost:5001/info |
-| ContratacaoService — Swagger | http://localhost:5002 |
-| ContratacaoService — Health | http://localhost:5002/health |
-| ContratacaoService — Info | http://localhost:5002/info |
-| RabbitMQ — Painel | http://localhost:15672 |
-
----
-
-**Adminer — PostgreSQL**
-
-Interface web para visualizar e consultar o banco de dados PostgreSQL.
-
-> Na VPS já está habilitado. Para habilitar localmente:
-> ```bash
-> ./scripts/set-adminer.sh --enable
-> ```
-
-| Campo | Valor |
-|-------|-------|
-| URL | http://2.25.122.11:5050 |
-| Sistema | `PostgreSQL` |
-| Servidor | `postgres` |
-| Usuário | `postgres` |
-| Senha | `postgres` |
-| Base de dados | `seguros_db` |
-
-Tabelas disponíveis:
-
-```
-seguros_db
-├── proposta.propostas       — propostas de seguro criadas
-└── contratacao.contratacoes — contratações realizadas
-```
-
----
-
-**RabbitMQ — Painel de Gerenciamento**
-
-Interface web nativa do RabbitMQ para monitorar filas e mensagens.
-
-> Na VPS já está habilitado. Para habilitar localmente:
-> ```bash
-> ./scripts/set-rabbitmq.sh --enable
-> ```
-
-| Campo | Valor |
-|-------|-------|
-| URL | http://2.25.122.11:15672 |
-| Usuário | `guest` |
-| Senha | `guest` |
-
-O que monitorar após rodar o fluxo com RabbitMQ:
-
-```
-Queues and Streams
-└── proposta.contratada.queue
-    ├── Messages ready   — mensagens aguardando consumidor
-    ├── Message rates    — taxa de publicação
-    └── Get messages     — visualiza o conteúdo do evento
-```
-
-Para ver o conteúdo de uma mensagem:
-
-```
-Queues → proposta.contratada.queue
-→ Get messages → Ackmode: Nack → Get Message(s)
-```
-
-Conteúdo esperado:
-
-```json
-{
-  "ContratacaoId":   "48988e73-6c65-46f6-b10d-8b8352111df2",
-  "PropostaId":      "c13f6050-1426-48f9-83ae-41d7133fa7ba",
-  "Cpf":             "120.147.173-70",
-  "DataContratacao": "2026-08-30T00:54:47",
-  "OcorridoEm":      "2026-08-30T00:54:47"
-}
-```
-
-</details>
-
-
 
 Sistema de gerenciamento de propostas de seguro desenvolvido como teste técnico,
 utilizando Arquitetura Hexagonal (Ports & Adapters), .NET 10 e PostgreSQL.
@@ -161,16 +16,6 @@ O sistema é composto por dois microserviços independentes:
 |---|---|---|
 | **PropostaService** | Criar e gerenciar propostas de seguro | 5001 |
 | **ContratacaoService** | Contratar propostas aprovadas e publicar eventos | 5002 |
-
----
-
-## Diagrama Interativo
-
-> 🔍 **[Abrir diagrama interativo e navegável →](https://gitdiagram.com/josehelioaraujo/proposta-seguros)**  
-> Gerado automaticamente pelo GitDiagram — clique nos componentes para navegar pelo código.
-
-> 🗺️ **[Explorar grafo de dependências do código →](https://codegraphcontext.vercel.app/josehelioaraujo/proposta-seguros)**  
-> Visualização do grafo de contexto e dependências entre classes e módulos do projeto.
 
 ---
 
@@ -363,11 +208,31 @@ dotnet run
 
 ---
 
-## Documentação
+## URLs
 
-- [Enunciado do Projeto](docs/enunciado.md)
-- [Postman Collection](docs/postman/)
-- [Migrations SQL](migrations/)
+### VPS Hostinger
+
+| Serviço | URL |
+|---|---|
+| PropostaService — Swagger | http://2.25.122.11:5001 |
+| PropostaService — Health | http://2.25.122.11:5001/health |
+| PropostaService — Info | http://2.25.122.11:5001/info |
+| ContratacaoService — Swagger | http://2.25.122.11:5002 |
+| ContratacaoService — Health | http://2.25.122.11:5002/health |
+| ContratacaoService — Info | http://2.25.122.11:5002/info |
+| RabbitMQ — Painel | http://2.25.122.11:15672 |
+
+### Local
+
+| Serviço | URL |
+|---|---|
+| PropostaService — Swagger | http://localhost:5001 |
+| PropostaService — Health | http://localhost:5001/health |
+| PropostaService — Info | http://localhost:5001/info |
+| ContratacaoService — Swagger | http://localhost:5002 |
+| ContratacaoService — Health | http://localhost:5002/health |
+| ContratacaoService — Info | http://localhost:5002/info |
+| RabbitMQ — Painel | http://localhost:15672 |
 
 ---
 
@@ -399,9 +264,7 @@ dotnet run
 
 ---
 
-
-<details>
-<summary><strong>Migrations SQL</strong></summary>
+## Migrations SQL
 
 As migrations criam os schemas e tabelas no PostgreSQL.
 
@@ -432,8 +295,6 @@ seguros_db
         ├── id, proposta_id
         ├── cpf, data_contratacao
 ```
-
-</details>
 
 ---
 
@@ -483,9 +344,7 @@ Canto superior direito do Postman:
 
 ---
 
-
-<details>
-<summary><strong>Simulação Completa de Testes</strong></summary>
+## Simulação Completa de Testes
 
 ### Cenário 1 — InMemory
 
@@ -552,8 +411,6 @@ URL:     http://2.25.122.11:15672
 Usuário: guest / Senha: guest
 Fila:    proposta.contratada.queue
 ```
-
-</details>
 
 ---
 
@@ -645,30 +502,6 @@ PropostaService:    http://2.25.122.11:5001
 ContratacaoService: http://2.25.122.11:5002
 ```
 
-### Smoke Tests E2E — Newman + GitHub Pages
-
-Não solicitado no enunciado. Após cada deploy na VPS, a collection Postman é executada automaticamente via **Newman** (CLI oficial do Postman), validando o sistema em ambiente real de produção.
-
-```
-Deploy VPS → Health Check (aguarda VPS pronta) → Newman → GitHub Pages
-```
-
-O relatório HTML é publicado automaticamente e fica disponível em URL fixa:
-
-**[📊 Ver Relatório de Testes E2E →](https://josehelioaraujo.github.io/proposta-seguros/)**
-
-**Cenários executados — Fluxo 07 (PostgreSQL + RabbitMQ):**
-
-| # | Cenário | Validações |
-|---|---------|-----------|
-| 07.1 | Criar Proposta | Status 201, ID retornado, CPF válido gerado automaticamente |
-| 07.2 | Aprovar Proposta | Status 200, status da proposta = `Aprovada` |
-| 07.3 | Contratar Proposta | Status 201, contratação criada com sucesso |
-| 07.4 | Verificar Contratação | Status 200, dados persistidos no PostgreSQL |
-| 07.5 | Health Check Completo | Status 200, postgres + rabbitmq = `Healthy` |
-
-**Resultado:** 5 requests · 9 assertions · 0 falhas · ambiente real de produção (VPS Hostinger)
-
 ### Pipeline de CI/CD
 
 Não solicitado no enunciado. Implementado para demonstrar automação completa do ciclo de desenvolvimento — do commit ao ambiente de produção, sem intervenção manual.
@@ -735,9 +568,15 @@ Os testes são controlados pela variável `RUN_INTEGRATION_TESTS`:
 
 ---
 
+## Documentação
 
-<details>
-<summary><strong>Containers Docker</strong></summary>
+- [Enunciado do Projeto](docs/enunciado.md)
+- [Postman Collection](docs/postman/)
+- [Migrations SQL](migrations/)
+
+---
+
+## Containers Docker
 
 | Container | Imagem | Porta | Descrição |
 |-----------|--------|-------|-----------|
@@ -765,13 +604,9 @@ seguros-rabbitmq
 └── usuário: guest / senha: guest
 ```
 
-</details>
-
 ---
 
-
-<details>
-<summary><strong>Scripts de Operação</strong></summary>
+## Scripts de Operação
 
 Todos os scripts ficam na pasta `scripts/` e devem ser executados
 a partir da raiz do projeto na VPS.
@@ -840,13 +675,9 @@ USAR_RABBITMQ=false
 
 Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente.
 
-</details>
-
 ---
 
-
-<details>
-<summary><strong>Mensageria — Produtor e Consumidores</strong></summary>
+## Mensageria — Produtor e Consumidores
 
 Nossa aplicação atua apenas como **produtora** de eventos. O ContratacaoService
 publica o evento `PropostaContratadaEvent` na fila após cada contratação
@@ -916,8 +747,76 @@ Queues and Streams
 As mensagens ficam acumuladas pois não há consumidores implementados
 neste projeto — em produção real seriam processadas imediatamente.
 
-</details>
+---
+
+## Painéis Administrativos
+
+### Adminer — PostgreSQL
+
+Interface web para visualizar e consultar o banco de dados PostgreSQL.
+
+```bash
+# Sobe o Adminer
+./scripts/set-adminer.sh --enable
+
+# Para o Adminer
+./scripts/set-adminer.sh --disable
+```
+
+```
+URL:      http://2.25.122.11:5050
+Sistema:  PostgreSQL
+Servidor: postgres
+Usuário:  postgres
+Senha:    postgres
+Banco:    seguros_db
+```
+
+Tabelas disponíveis:
+
+```
+seguros_db
+├── proposta.propostas       — propostas de seguro criadas
+└── contratacao.contratacoes — contratações realizadas
+```
 
 ---
 
+### RabbitMQ Management — Mensageria
 
+Interface web nativa do RabbitMQ para monitorar filas e mensagens.
+
+```
+URL:     http://2.25.122.11:15672
+Usuário: guest
+Senha:   guest
+```
+
+O que monitorar após rodar o fluxo com RabbitMQ habilitado:
+
+```
+Queues and Streams
+└── proposta.contratada.queue
+    ├── Messages ready   — mensagens aguardando consumidor
+    ├── Message rates    — taxa de publicação
+    └── Get messages     — visualiza o conteúdo do evento
+```
+
+Para ver o conteúdo de uma mensagem:
+
+```
+Queues → proposta.contratada.queue
+→ Get messages → Ackmode: Nack → Get Message(s)
+```
+
+Conteúdo esperado:
+
+```json
+{
+  "ContratacaoId":   "48988e73-6c65-46f6-b10d-8b8352111df2",
+  "PropostaId":      "c13f6050-1426-48f9-83ae-41d7133fa7ba",
+  "Cpf":             "120.147.173-70",
+  "DataContratacao": "2026-08-30T00:54:47",
+  "OcorridoEm":      "2026-08-30T00:54:47"
+}
+```
