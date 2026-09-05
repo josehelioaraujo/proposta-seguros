@@ -1,4 +1,4 @@
-# Stage 1 — Build
+﻿# Stage 1 â€” Build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -16,10 +16,11 @@ RUN dotnet publish src/ContratacaoService/ContratacaoService.Api/ContratacaoServ
     -o /app/publish \
     --no-restore
 
-# Stage 2 — Runtime
+# Stage 2 â€” Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY migrations/ migrations/
 
 # Versioning
 ARG BUILD_VERSION=local
@@ -33,3 +34,4 @@ EXPOSE 5002
 ENV ASPNETCORE_URLS=http://+:5002
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "ContratacaoService.Api.dll"]
+

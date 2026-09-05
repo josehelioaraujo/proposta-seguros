@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using DbUp;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -99,5 +100,27 @@ app.MapMcp("/mcp");
 app.MapMcp("/sse");
 
 app.MapMetrics();
+
+// ── DbUp — Migrations automáticas ────────────────────────────────────────────
+if (usarBancoDados)
+{
+    var connectionString = app.Configuration.GetConnectionString("DefaultConnection")!;
+    var upgrader = DbUp.DeployChanges.To
+        .PostgresqlDatabase(connectionString)
+        .WithScriptsFromFileSystem(
+            Path.Combine(AppContext.BaseDirectory, "migrations"),
+            s => s.EndsWith(".sql"))
+        .WithTransactionPerScript()
+        .LogToConsole()
+        .Build();
+
+    var result = upgrader.PerformUpgrade();
+    if (!result.Successful)
+    {
+        Console.WriteLine($"[DbUp] Falha ao aplicar migrations: {result.Error}");
+        throw result.Error;
+    }
+}
 app.Run();
+
 
