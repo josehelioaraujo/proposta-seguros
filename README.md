@@ -8,6 +8,9 @@
 
 ## Introdução
 
+<details>
+<summary><strong>Sistema de propostas de seguro com Arquitetura Hexagonal, Kafka, RabbitMQ, Outbox Pattern, Observabilidade completa e MCP Server</strong></summary>
+
 Sistema de gerenciamento de propostas de seguro desenvolvido com **Arquitetura Hexagonal (Ports & Adapters)**, **.NET 10** e **PostgreSQL**, composto por dois microserviços independentes que se comunicam via HTTP REST e mensageria assíncrona com Kafka e RabbitMQ.
 
 O **PropostaService** gerencia o ciclo de vida das propostas — criação, consulta e alteração de status (Em Análise → Aprovada / Rejeitada). O **ContratacaoService** efetua a contratação de propostas aprovadas, consultando o PropostaService via HTTP, persistindo a contratação e publicando o evento `PropostaContratadaEvent` no RabbitMQ para consumo por serviços downstream (apólice, cobrança, notificação, SUSEP).
@@ -17,7 +20,9 @@ Ambos os serviços operam em dois modos intercambiáveis via feature flag — **
 O projeto inclui pipeline CI/CD completo, testes de integração com Testcontainers, smoke tests E2E via Newman, deploy automatizado em VPS real, stack completa de observabilidade (Prometheus, Grafana, Jaeger, Loki) e **MCP Server** expondo as operações das APIs como tools para agentes de IA.
 
 ---
-  
+
+</details>
+
 
 ## 📚 Documentação Rápida
 
