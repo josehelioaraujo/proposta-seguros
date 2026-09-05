@@ -14,7 +14,7 @@ O **PropostaService** gerencia o ciclo de vida das propostas — criação, cons
 
 Ambos os serviços operam em dois modos intercambiáveis via feature flag — **InMemory** para desenvolvimento e **PostgreSQL via Dapper** para produção — sem alteração de código, demonstrando o padrão Ports & Adapters na prática.
 
-O projeto vai além do enunciado original com pipeline CI/CD completo, testes de integração com Testcontainers, smoke tests E2E via Newman, deploy automatizado em VPS real, stack completa de observabilidade (Prometheus, Grafana, Jaeger, Loki) e **MCP Server** expondo as operações das APIs como tools para agentes de IA.
+O projeto inclui pipeline CI/CD completo, testes de integração com Testcontainers, smoke tests E2E via Newman, deploy automatizado em VPS real, stack completa de observabilidade (Prometheus, Grafana, Jaeger, Loki) e **MCP Server** expondo as operações das APIs como tools para agentes de IA.
 
 ---
 
@@ -189,7 +189,7 @@ proposta-seguros/
 
 ## Como Executar
 
-> Optei por VPS em vez de ambiente local para aproximar o projeto de um cenário real de produção — provisionamento, deploy via SSH e operação com Docker em servidor Linux são habilidades que fazem parte do dia a dia de desenvolvimento moderno.
+> Optei por VPS da Hostinger,em vez de ambiente local para aproximar o projeto de um cenário real de produção — provisionamento, deploy via SSH e operação com Docker em servidor Linux são habilidades que fazem parte do dia a dia de desenvolvimento moderno.
 
 ### Opção 1 — Docker na VPS (recomendado)
 
@@ -670,8 +670,7 @@ app.MapMcp("/mcp");
 
 ### RabbitMQ — Mensageria
 
-O enunciado menciona mensageria como item opcional. O ContratacaoService publica
-o evento PropostaContratadaEvent após cada contratação bem-sucedida.
+O ContratacaoService publica o evento PropostaContratadaEvent após cada contratação bem-sucedida.
 
 ```
 Evento: PropostaContratadaEvent
@@ -732,7 +731,7 @@ ContratacaoService: http://2.25.122.11:5002
 
 ### Pipeline de CI/CD
 
-Não solicitado no enunciado. Implementado para demonstrar automação completa do ciclo de desenvolvimento — do commit ao ambiente de produção, sem intervenção manual.
+Foi implementado para demonstrar automação completa do ciclo de desenvolvimento — do commit ao ambiente de produção, sem intervenção manual.
 
 O pipeline é composto por cinco etapas executadas em sequência:
 
@@ -770,7 +769,7 @@ GET http://2.25.122.11:5002/info
 
 ### Testes de Integração
 
-Não solicitados no enunciado. Implementados para demonstrar cobertura além dos testes unitários — validando o comportamento real da aplicação com infraestrutura real.
+Foram implementados para demonstrar cobertura além dos testes unitários — validando o comportamento real da aplicação com infraestrutura real.
 
 Utilizam `WebApplicationFactory` (ASP.NET Core) e `Testcontainers` — containers Docker reais sobem e são destruídos automaticamente durante a execução dos testes, sem dependência de ambiente externo.
 
