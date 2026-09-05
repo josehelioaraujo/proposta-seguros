@@ -4,7 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Kafka;
 using Testcontainers.PostgreSql;
 using ContratacaoService.Domain.Ports.Output;
+using ContratacaoService.Infrastructure.Adapters.Output.Messaging;
+using ContratacaoService.Infrastructure.Repositories;
+using ContratacaoService.Infrastructure.Workers;
 using ContratacaoService.IntegrationTests.Fakes;
+using ContratacaoService.Infrastructure.Messaging;
 using Xunit;
 
 namespace ContratacaoService.IntegrationTests.Fixtures;
@@ -59,14 +63,7 @@ public class KafkaFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services =>
-        {
-            // Substitui o HttpPropostaServiceClient pelo Fake — sem chamada HTTP
-            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IPropostaServiceClient));
-            if (descriptor != null) services.Remove(descriptor);
-            services.AddSingleton<IPropostaServiceClient>(FakePropostaClient);
-        });
-
+        // ConfigureAppConfiguration PRIMEIRO — antes do ConfigureServices
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -79,6 +76,29 @@ public class KafkaFixture : WebApplicationFactory<Program>, IAsyncLifetime
                 ["Kafka:Topicos:PropostaContratadaEvent"] = "proposta-contratada",
                 ["Services:PropostaService"]              = "http://localhost:5001"
             });
+        });
+
+        builder.ConfigureServices((ctx, services) =>
+        {
+            // Substitui o HttpPropostaServiceClient pelo Fake
+            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IPropostaServiceClient));
+            if (descriptor != null) services.Remove(descriptor);
+            services.AddSingleton<IPropostaServiceClient>(FakePropostaClient);
+
+            // Garante OutboxRepository registrado (pode ter sido registrado como Null se a ordem falhar)
+            var outboxDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IOutboxRepository));
+            if (outboxDescriptor != null) services.Remove(outboxDescriptor);
+            services.AddScoped<IOutboxRepository, OutboxRepository>();
+
+            // Garante KafkaEventPublisher registrado
+            var publisherDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEventPublisher));
+            if (publisherDescriptor != null) services.Remove(publisherDescriptor);
+            services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+
+            // Garante OutboxPublisherWorker registrado
+            var workerDescriptor = services.SingleOrDefault(d => d.ImplementationType == typeof(OutboxPublisherWorker));
+            if (workerDescriptor == null)
+                services.AddHostedService<OutboxPublisherWorker>();
         });
     }
 
@@ -112,3 +132,4 @@ public class KafkaFixture : WebApplicationFactory<Program>, IAsyncLifetime
         }
     }
 }
+
