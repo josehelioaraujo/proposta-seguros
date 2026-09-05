@@ -36,4 +36,14 @@ public class DapperContratacaoRepository : IContratacaoRepository
             contratacao.DataContratacao,
             contratacao.CriadoEm
         });
+
+    public async Task AddAsync(Contratacao contratacao, IDbTransaction transacao)
+        => await transacao.Connection!.ExecuteAsync(ContratacaoQueries.Insert, new
+        {
+            contratacao.Id,
+            contratacao.PropostaId,
+            contratacao.Cpf,
+            contratacao.DataContratacao,
+            contratacao.CriadoEm
+        }, transacao);
 }

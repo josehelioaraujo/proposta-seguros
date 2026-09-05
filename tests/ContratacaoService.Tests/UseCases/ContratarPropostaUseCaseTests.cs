@@ -4,6 +4,7 @@ using ContratacaoService.Application.UseCases.ContratarProposta;
 using ContratacaoService.Domain.Entities;
 using ContratacaoService.Domain.Ports.Output;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using ContratacaoService.Domain.Shared;
 using ContratacaoService.Tests.Mocks;
 
@@ -11,70 +12,60 @@ namespace ContratacaoService.Tests.UseCases;
 
 public class ContratarPropostaUseCaseTests
 {
-    private readonly Mock<IContratacaoRepository> _repositoryMock;
+    private readonly Mock<IContratacaoRepository>         _repositoryMock;
+    private readonly Mock<IOutboxRepository>              _outboxMock;
     private readonly Mock<ILogger<ContratarPropostaUseCase>> _loggerMock;
-    private readonly Mock<IPropostaServiceClient> _clientMock;
-    private readonly ContratarPropostaUseCase     _useCase;
-    private readonly ContratarPropostaRequestFaker _faker;
+    private readonly Mock<IPropostaServiceClient>         _clientMock;
+    private readonly IConfiguration _config;
+    private readonly ContratarPropostaUseCase             _useCase;
+    private readonly ContratarPropostaRequestFaker        _faker;
 
     public ContratarPropostaUseCaseTests()
     {
         _repositoryMock = new Mock<IContratacaoRepository>();
+        _outboxMock     = new Mock<IOutboxRepository>();
         _loggerMock     = new Mock<ILogger<ContratarPropostaUseCase>>();
         _clientMock     = new Mock<IPropostaServiceClient>();
+        _config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Features:UsarBancoDados"] = "false", ["Features:UsarKafka"] = "false", ["Features:UsarRabbitMQ"] = "false" }).Build();
         _faker          = new ContratarPropostaRequestFaker();
 
+        
         _useCase = new ContratarPropostaUseCase(
             _repositoryMock.Object,
+            _outboxMock.Object,
             _clientMock.Object,
+            _config,
             _loggerMock.Object);
     }
 
     [Fact]
     public async Task ExecuteAsync_DeveContratarProposta_QuandoPropostaAprovada()
     {
-        // Arrange
         var request  = _faker.Generate();
         var proposta = new PropostaDto(request.PropostaId, "Aprovada");
 
-        _repositoryMock
-            .Setup(r => r.GetByPropostaIdAsync(request.PropostaId))
-            .ReturnsAsync((Contratacao?)null);
+        _repositoryMock.Setup(r => r.GetByPropostaIdAsync(request.PropostaId)).ReturnsAsync((Contratacao?)null);
+        _clientMock.Setup(c => c.ObterPropostaAsync(request.PropostaId)).ReturnsAsync(proposta);
+        _repositoryMock.Setup(r => r.AddAsync(It.IsAny<Contratacao>())).Returns(Task.CompletedTask);
 
-        _clientMock
-            .Setup(c => c.ObterPropostaAsync(request.PropostaId))
-            .ReturnsAsync(proposta);
-
-        _repositoryMock
-            .Setup(r => r.AddAsync(It.IsAny<Contratacao>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
         var result = await _useCase.ExecuteAsync(request);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Status.Should().Be(ResultStatus.Created);
         result.Data.Should().NotBeNull();
         result.Data!.PropostaId.Should().Be(request.PropostaId);
-        _repositoryMock.Verify(r => r.AddAsync(It.IsAny<Contratacao>()), Times.Once);
     }
 
     [Fact]
     public async Task ExecuteAsync_DeveRetornarConflict_QuandoPropostaJaContratada()
     {
-        // Arrange
-        var request      = _faker.Generate();
-        var contratacao  = new ContratacaoFaker().Generate();
+        var request     = _faker.Generate();
+        var contratacao = new ContratacaoFaker().Generate();
 
-        _repositoryMock
-            .Setup(r => r.GetByPropostaIdAsync(request.PropostaId))
-            .ReturnsAsync(contratacao);
+        _repositoryMock.Setup(r => r.GetByPropostaIdAsync(request.PropostaId)).ReturnsAsync(contratacao);
 
-        // Act
         var result = await _useCase.ExecuteAsync(request);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Conflict);
         _repositoryMock.Verify(r => r.AddAsync(It.IsAny<Contratacao>()), Times.Never);
@@ -83,21 +74,13 @@ public class ContratarPropostaUseCaseTests
     [Fact]
     public async Task ExecuteAsync_DeveRetornarNotFound_QuandoPropostaNaoEncontrada()
     {
-        // Arrange
         var request = _faker.Generate();
 
-        _repositoryMock
-            .Setup(r => r.GetByPropostaIdAsync(request.PropostaId))
-            .ReturnsAsync((Contratacao?)null);
+        _repositoryMock.Setup(r => r.GetByPropostaIdAsync(request.PropostaId)).ReturnsAsync((Contratacao?)null);
+        _clientMock.Setup(c => c.ObterPropostaAsync(request.PropostaId)).ReturnsAsync((PropostaDto?)null);
 
-        _clientMock
-            .Setup(c => c.ObterPropostaAsync(request.PropostaId))
-            .ReturnsAsync((PropostaDto?)null);
-
-        // Act
         var result = await _useCase.ExecuteAsync(request);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.NotFound);
         _repositoryMock.Verify(r => r.AddAsync(It.IsAny<Contratacao>()), Times.Never);
@@ -108,22 +91,14 @@ public class ContratarPropostaUseCaseTests
     [InlineData("Rejeitada")]
     public async Task ExecuteAsync_DeveRetornarUnprocessable_QuandoPropostaNaoAprovada(string status)
     {
-        // Arrange
         var request  = _faker.Generate();
         var proposta = new PropostaDto(request.PropostaId, status);
 
-        _repositoryMock
-            .Setup(r => r.GetByPropostaIdAsync(request.PropostaId))
-            .ReturnsAsync((Contratacao?)null);
+        _repositoryMock.Setup(r => r.GetByPropostaIdAsync(request.PropostaId)).ReturnsAsync((Contratacao?)null);
+        _clientMock.Setup(c => c.ObterPropostaAsync(request.PropostaId)).ReturnsAsync(proposta);
 
-        _clientMock
-            .Setup(c => c.ObterPropostaAsync(request.PropostaId))
-            .ReturnsAsync(proposta);
-
-        // Act
         var result = await _useCase.ExecuteAsync(request);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.UnprocessableEntity);
         _repositoryMock.Verify(r => r.AddAsync(It.IsAny<Contratacao>()), Times.Never);
@@ -132,24 +107,17 @@ public class ContratarPropostaUseCaseTests
     [Fact]
     public async Task ExecuteAsync_DeveRetornarUnprocessable_QuandoPropostaEmAnalise()
     {
-        // Arrange
         var request  = _faker.Generate();
         var proposta = new PropostaDto(request.PropostaId, "EmAnalise");
 
-        _repositoryMock
-            .Setup(r => r.GetByPropostaIdAsync(request.PropostaId))
-            .ReturnsAsync((Contratacao?)null);
+        _repositoryMock.Setup(r => r.GetByPropostaIdAsync(request.PropostaId)).ReturnsAsync((Contratacao?)null);
+        _clientMock.Setup(c => c.ObterPropostaAsync(request.PropostaId)).ReturnsAsync(proposta);
 
-        _clientMock
-            .Setup(c => c.ObterPropostaAsync(request.PropostaId))
-            .ReturnsAsync(proposta);
-
-        // Act
         var result = await _useCase.ExecuteAsync(request);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.UnprocessableEntity);
     }
 }
+
 

@@ -18,4 +18,11 @@ public class InMemoryContratacaoRepository : IContratacaoRepository
         _contratacoes.Add(contratacao);
         return Task.CompletedTask;
     }
+
+    public Task AddAsync(Contratacao contratacao, System.Data.IDbTransaction transacao)
+    {
+        _contratacoes.Add(contratacao);
+        return Task.CompletedTask;
+    }
 }
+

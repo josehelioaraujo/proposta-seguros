@@ -34,6 +34,8 @@
       Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
       Features__UsarKafka:     ${USAR_KAFKA:-false}
       Kafka__BootstrapServers: kafka:9092
+      Features__UsarKafka:     ${USAR_KAFKA:-false}
+      Kafka__BootstrapServers: kafka:9092
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
       OTEL_SERVICE_NAME: "proposta-api"
     depends_on:
@@ -61,6 +63,8 @@
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=seguros_db;Username=postgres;Password=postgres"
       Features__UsarBancoDados: ${USAR_BANCO_DADOS:-false}
       Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
+      Features__UsarKafka:     ${USAR_KAFKA:-false}
+      Kafka__BootstrapServers: kafka:9092
       Features__UsarKafka:     ${USAR_KAFKA:-false}
       Kafka__BootstrapServers: kafka:9092
       Services__PropostaService: "http://proposta-api:5001"
@@ -268,6 +272,58 @@
     profiles:
       - kafka
 
+
+  # ---------------------------------------------------------------------------
+  # Kafka KRaft + Kafka UI  profile: kafka
+  # ---------------------------------------------------------------------------
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: seguros-kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - seguros-network
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    profiles:
+      - kafka
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: seguros-kafka-ui
+    ports:
+      - "8082:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - seguros-network
+    profiles:
+      - kafka
+
 volumes:
   postgres_data:
   rabbitmq_data:
@@ -276,7 +332,9 @@ volumes:
   loki_data:
   open_webui_data:
   kafka_data:
+  kafka_data:
 
 networks:
   seguros-network:
     driver: bridge
+
