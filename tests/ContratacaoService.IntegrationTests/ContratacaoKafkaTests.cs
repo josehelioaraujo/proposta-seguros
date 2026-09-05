@@ -61,6 +61,40 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
             EnableAutoCommit = false
         };
 
+        // Criar topico se nao existir
+        var adminConfig = new AdminClientConfig { BootstrapServers = _fixture.KafkaBootstrapServers };
+        using var admin = new AdminClientBuilder(adminConfig).Build();
+        try
+        {
+            await admin.CreateTopicsAsync(new[]
+            {
+                new Confluent.Kafka.Admin.TopicSpecification
+                {
+                    Name = "proposta-contratada",
+                    NumPartitions = 1,
+                    ReplicationFactor = 1
+                }
+            });
+        }
+        catch (Confluent.Kafka.Admin.CreateTopicsException) { /* topico ja existe */ }
+
+        // Criar topico se nao existir
+        var adminConfig = new AdminClientConfig { BootstrapServers = _fixture.KafkaBootstrapServers };
+        using var admin = new AdminClientBuilder(adminConfig).Build();
+        try
+        {
+            await admin.CreateTopicsAsync(new[]
+            {
+                new Confluent.Kafka.Admin.TopicSpecification
+                {
+                    Name = "proposta-contratada",
+                    NumPartitions = 1,
+                    ReplicationFactor = 1
+                }
+            });
+        }
+        catch (Confluent.Kafka.Admin.CreateTopicsException) { /* topico ja existe */ }
+
         using var consumer = new ConsumerBuilder<string, string>(config).Build();
         consumer.Subscribe("proposta-contratada");
 
@@ -91,3 +125,5 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         content.Should().Contain("Healthy");
     }
 }
+
+
