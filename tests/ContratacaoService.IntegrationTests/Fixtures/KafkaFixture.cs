@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Kafka;
 using Testcontainers.PostgreSql;
+using ContratacaoService.Domain.Ports.Output;
+using ContratacaoService.IntegrationTests.Fakes;
 using Xunit;
 
 namespace ContratacaoService.IntegrationTests.Fixtures;
@@ -9,6 +12,7 @@ namespace ContratacaoService.IntegrationTests.Fixtures;
 public class KafkaFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public static bool DockerDisponivel { get; private set; }
+    public FakePropostaServiceClient FakePropostaClient { get; } = new();
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
@@ -55,6 +59,14 @@ public class KafkaFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
+        builder.ConfigureServices(services =>
+        {
+            // Substitui o HttpPropostaServiceClient pelo Fake — sem chamada HTTP
+            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IPropostaServiceClient));
+            if (descriptor != null) services.Remove(descriptor);
+            services.AddSingleton<IPropostaServiceClient>(FakePropostaClient);
+        });
+
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>

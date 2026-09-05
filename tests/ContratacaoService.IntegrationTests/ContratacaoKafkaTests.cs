@@ -2,8 +2,8 @@
 using Confluent.Kafka;
 using FluentAssertions;
 using ContratacaoService.IntegrationTests.Fixtures;
-using Xunit;
 using Microsoft.Extensions.Configuration;
+using Xunit;
 
 namespace ContratacaoService.IntegrationTests;
 
@@ -43,12 +43,14 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         var propostaId = Guid.NewGuid();
         var cpf        = "529.982.247-25";
 
-        await InserirPropostaAprovadaAsync(propostaId, cpf);
+        // Registra proposta aprovada no fake — sem chamada HTTP
+        _fixture.FakePropostaClient.Registrar(propostaId, "Aprovada");
 
         var payload  = new { propostaId, cpf };
         var response = await _client.PostAsJsonAsync("/api/Contratacoes", payload);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
 
+        // Aguarda OutboxRelayWorker publicar (intervalo 5s + margem)
         await Task.Delay(TimeSpan.FromSeconds(8));
 
         var config = new ConsumerConfig
@@ -88,26 +90,4 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         var content = await response.Content.ReadAsStringAsync();
         content.Should().Contain("Healthy");
     }
-
-    private async Task InserirPropostaAprovadaAsync(Guid propostaId, string cpf)
-    {
-        var cfg = _fixture.Services.GetService(typeof(IConfiguration)) as IConfiguration
-            ?? throw new InvalidOperationException("IConfiguration nao encontrado");
-
-        using var conn = new Npgsql.NpgsqlConnection(cfg.GetConnectionString("DefaultConnection"));
-        await conn.OpenAsync();
-
-        const string sql = @"
-            INSERT INTO proposta.propostas (id, nome_cliente, cpf, tipo_seguro, valor, status, criado_em)
-            VALUES (@Id, 'Cliente Teste', @Cpf, 1, 100.00, 2, NOW())
-            ON CONFLICT (id) DO NOTHING";
-
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        cmd.Parameters.AddWithValue("@Id",  propostaId);
-        cmd.Parameters.AddWithValue("@Cpf", cpf);
-        await cmd.ExecuteNonQueryAsync();
-    }
 }
-
-
