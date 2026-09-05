@@ -24,7 +24,7 @@ on:
       broker:
         description: 'Broker de mensageria'
         required: true
-        default: 'rabbitmq'
+        default: 'kafka'
         type: choice
         options:
           - kafka
@@ -214,28 +214,34 @@ jobs:
             BROKER="${{ github.event.inputs.broker }}"
             USAR_BANCO="${{ github.event.inputs.usar_banco }}"
 
-            if [ -n "$BROKER" ]; then
-              echo "workflow_dispatch detectado — aplicando feature flags..."
-              if [ "$BROKER" = "kafka" ]; then
-                sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=true/" .env
-                sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=false/" .env
-                echo "Broker: Kafka habilitado"
-              elif [ "$BROKER" = "rabbitmq" ]; then
-                sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=false/" .env
-                sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=true/" .env
-                echo "Broker: RabbitMQ habilitado"
-              else
-                sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=false/" .env
-                sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=false/" .env
-                echo "Broker: nenhum (NullEventPublisher)"
-              fi
-              if [ -n "$USAR_BANCO" ]; then
-                sed -i "s/FEATURES__USARBANCODODADOS=.*/FEATURES__USARBANCODODADOS=$USAR_BANCO/" .env
-                echo "UsarBancoDados: $USAR_BANCO"
-              fi
-              docker compose restart contratacao-api proposta-api
-              echo "Feature flags aplicadas e containers reiniciados"
+            # Se workflow_dispatch usa o input; se push normal usa defaults (kafka + banco)
+            if [ -z "$BROKER" ]; then
+              BROKER="kafka"
+              USAR_BANCO="true"
+              echo "Push normal — aplicando defaults: Kafka + UsarBancoDados=true"
+            else
+              echo "workflow_dispatch detectado — aplicando feature flags selecionadas..."
             fi
+
+            if [ "$BROKER" = "kafka" ]; then
+              sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=true/" .env
+              sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=false/" .env
+              echo "Broker: Kafka habilitado"
+            elif [ "$BROKER" = "rabbitmq" ]; then
+              sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=false/" .env
+              sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=true/" .env
+              echo "Broker: RabbitMQ habilitado"
+            else
+              sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=false/" .env
+              sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=false/" .env
+              echo "Broker: nenhum (NullEventPublisher)"
+            fi
+            if [ -n "$USAR_BANCO" ]; then
+              sed -i "s/FEATURES__USARBANCODODADOS=.*/FEATURES__USARBANCODODADOS=$USAR_BANCO/" .env
+              echo "UsarBancoDados: $USAR_BANCO"
+            fi
+            docker compose restart contratacao-api proposta-api
+            echo "Feature flags aplicadas e containers reiniciados"
 
             echo "Deploy concluido - versao $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
 
