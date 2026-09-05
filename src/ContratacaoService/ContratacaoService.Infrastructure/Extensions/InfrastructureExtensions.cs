@@ -60,10 +60,11 @@ public static class InfrastructureExtensions
 
         if (usarKafka || usarRabbitMQ)
         {
-            services.AddHostedService<OutboxRelayWorker>();
+            services.AddHostedService<OutboxPublisherWorker>();
         }
 
         return services;
     }
 }
+
 

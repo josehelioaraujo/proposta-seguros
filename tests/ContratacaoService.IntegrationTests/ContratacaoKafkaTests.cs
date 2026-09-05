@@ -69,7 +69,7 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         var response = await _client.PostAsJsonAsync("/api/Contratacoes", payload);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
 
-        // Aguardar OutboxRelayWorker publicar (intervalo 5s + margem)
+        // Aguardar OutboxPublisherWorker publicar (intervalo 5s + margem)
         await Task.Delay(TimeSpan.FromSeconds(8));
 
         // Consumir do Kafka e verificar mensagem
@@ -111,3 +111,4 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         content.Should().Contain("Healthy");
     }
 }
+
