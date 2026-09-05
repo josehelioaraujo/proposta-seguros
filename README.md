@@ -3,18 +3,31 @@
 [![CI/CD](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=alert_status)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
+[![Changelog](https://img.shields.io/badge/changelog-ver%20progresso-blue)](CHANGELOG.md)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 
 
 ## Introdução
 
-Sistema de gerenciamento de propostas de seguro desenvolvido com **Arquitetura Hexagonal (Ports & Adapters)**, **.NET 10** e **PostgreSQL**, composto por dois microserviços independentes que se comunicam via HTTP REST e mensageria assíncrona com RabbitMQ.
+Sistema de gerenciamento de propostas de seguro desenvolvido com **Arquitetura Hexagonal (Ports & Adapters)**, **.NET 10** e **PostgreSQL**, composto por dois microserviços independentes que se comunicam via HTTP REST e mensageria assíncrona com Kafka e RabbitMQ.
 
 O **PropostaService** gerencia o ciclo de vida das propostas — criação, consulta e alteração de status (Em Análise → Aprovada / Rejeitada). O **ContratacaoService** efetua a contratação de propostas aprovadas, consultando o PropostaService via HTTP, persistindo a contratação e publicando o evento `PropostaContratadaEvent` no RabbitMQ para consumo por serviços downstream (apólice, cobrança, notificação, SUSEP).
 
 Ambos os serviços operam em dois modos intercambiáveis via feature flag — **InMemory** para desenvolvimento e **PostgreSQL via Dapper** para produção — sem alteração de código, demonstrando o padrão Ports & Adapters na prática.
 
 O projeto inclui pipeline CI/CD completo, testes de integração com Testcontainers, smoke tests E2E via Newman, deploy automatizado em VPS real, stack completa de observabilidade (Prometheus, Grafana, Jaeger, Loki) e **MCP Server** expondo as operações das APIs como tools para agentes de IA.
+
+---
+ 
+
+## 📚 Documentação Rápida
+
+| | |
+|---|---|
+| 📋 [Changelog](CHANGELOG.md) | Histórico de versões e evolução do projeto |
+| 📮 [Postman Collection](docs/postman/) | Cenários de teste prontos para importar |
+| 🗃️ [Migrations SQL](migrations/) | Scripts de banco versionados V001–V006 |
+| 📄 [Enunciado](docs/enunciado.md) | Especificação original do projeto |
 
 ---
 
@@ -125,7 +138,10 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 
 - .NET 10 / C#
 - PostgreSQL 16 + Dapper
-- RabbitMQ 4 (mensageria — bônus)
+- Apache Kafka 3.9 (KRaft — mensageria event streaming)
+- RabbitMQ 4 (mensageria — message broker)
+- Outbox Pattern (garantia de entrega)
+- DbUp (migrations automáticas no startup)
 - FluentValidation
 - xUnit / Moq / Bogus / FluentAssertions
 - Docker / Docker Compose
@@ -157,7 +173,7 @@ proposta-seguros/
 ├── tests/
 │   ├── PropostaService.Tests/            # 13 testes unitários
 │   └── ContratacaoService.Tests/
-├── migrations/                           # SQL versionado V001–V005
+├── migrations/                           # SQL versionado V001–V006 (DbUp automático)
 ├── scripts/                              # Shell scripts de operação VPS
 ├── docs/
 │   ├── postman/                          # Collection + environments
@@ -280,19 +296,9 @@ dotnet run
 
 ## Migrations SQL
 
-As migrations criam os schemas e tabelas no PostgreSQL.
+As migrations são aplicadas **automaticamente no startup** das APIs via **DbUp** quando `UsarBancoDados=true` — sem intervenção manual.
 
-### Aplicar na VPS
-
-```bash
-cd /home/projetos/proposta-seguros
-
-docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V001__create_schema_proposta.sql
-docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V002__create_table_propostas.sql
-docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V003__create_schema_contratacao.sql
-docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V004__create_table_contratacoes.sql
-docker exec -i seguros-postgres psql -U postgres -d seguros_db < migrations/V005__add_criado_em_contratacoes.sql
-```
+> Para aplicar manualmente na VPS:
 
 ### Estrutura criada
 
@@ -795,14 +801,6 @@ Os testes são controlados pela variável `RUN_INTEGRATION_TESTS`:
 
 ---
 
-## Documentação
-
-- [Enunciado do Projeto](docs/enunciado.md)
-- [Postman Collection](docs/postman/)
-- [Migrations SQL](migrations/)
-
----
-
 ## Containers Docker
 
 | Container | Imagem | Porta | Descrição |
@@ -904,75 +902,6 @@ Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente
 
 ---
 
-## Mensageria — Produtor e Consumidores
-
-Nossa aplicação atua apenas como **produtora** de eventos. O ContratacaoService
-publica o evento `PropostaContratadaEvent` na fila após cada contratação
-bem-sucedida e não se preocupa com o que acontece a seguir — esse é o
-princípio do desacoplamento via mensageria.
-
-### O que publicamos
-
-```
-Evento: PropostaContratadaEvent
-Exchange: proposta.exchange (Direct)
-Fila:     proposta.contratada.queue
-
-Campos:
-├── ContratacaoId    — identificador único da contratação
-├── PropostaId       — referência à proposta contratada
-├── Cpf              — CPF do segurado
-├── DataContratacao  — data e hora da contratação
-└── OcorridoEm       — timestamp do evento
-```
-
-### Quem consumiria em produção real
-
-Cada consumidor é um microserviço independente que escuta a fila
-e reage ao evento de forma autônoma:
-
-| Consumidor | Responsabilidade |
-|------------|-----------------|
-| **ApoliceService** | Gera o documento PDF da apólice de seguro e disponibiliza para o segurado |
-| **CobrancaService** | Agenda o débito mensal do prêmio na conta ou cartão do segurado |
-| **NotificacaoService** | Envia e-mail e SMS de confirmação da contratação ao segurado |
-| **SusepService** | Registra a contratação junto à SUSEP (órgão regulador de seguros) dentro do prazo legal de 24h |
-| **AntiFraudeService** | Analisa o perfil do segurado e a contratação em busca de padrões suspeitos |
-| **AuditoriaService** | Registra todos os eventos em log imutável para fins de compliance e rastreabilidade |
-
-### Por que mensageria e não HTTP direto
-
-```
-Sem mensageria (HTTP síncrono):
-└── ContratacaoService chama cada serviço diretamente
-    ├── Se NotificacaoService cair  → contratação falha
-    ├── Se CobrancaService lento    → resposta demora
-    └── Acoplamento alto entre serviços
-
-Com mensageria (assíncrono):
-└── ContratacaoService publica o evento e retorna 201
-    ├── Cada consumidor processa no seu próprio ritmo
-    ├── Se um cair, a mensagem fica na fila até ele voltar
-    ├── Escala independente por serviço
-    └── Desacoplamento total
-```
-
-### Como verificar as mensagens publicadas
-
-Após rodar o fluxo 07 no Postman, acesse o painel do RabbitMQ:
-
-```
-URL:     http://2.25.122.11:15672
-Usuário: guest
-Senha:   guest
-
-Queues and Streams
-└── proposta.contratada.queue
-    └── Messages ready: N (mensagens aguardando consumidor)
-```
-
-As mensagens ficam acumuladas pois não há consumidores implementados
-neste projeto — em produção real seriam processadas imediatamente.
 
 ---
 
