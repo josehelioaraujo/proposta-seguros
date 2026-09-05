@@ -2,7 +2,7 @@
 echo ""
 echo "[start] Iniciando containers..."
 echo ""
-docker compose --profile monitoring --profile ai up -d
+docker compose --profile monitoring --profile ai --profile kafka up -d
 echo ""
 docker compose ps
 
@@ -15,3 +15,4 @@ echo "  Grafana:            http://$IP:3000"
 echo "  Jaeger:             http://$IP:16686"
 echo "  Open WebUI:         http://$IP:8080"
 echo ""
+
