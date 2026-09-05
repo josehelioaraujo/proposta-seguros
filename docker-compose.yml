@@ -34,6 +34,9 @@ services:
       Features__UsarRabbitMQ:   ${USAR_RABBITMQ:-false}
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
       OTEL_SERVICE_NAME: "proposta-api"
+      Ollama__BaseUrl: "http://host.gateway.internal:11434"
+    extra_hosts:
+      - "host.gateway.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,6 +66,9 @@ services:
       RabbitMQ__Host: seguros-rabbitmq
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
       OTEL_SERVICE_NAME: "contratacao-api"
+      Ollama__BaseUrl: "http://host.gateway.internal:11434"
+    extra_hosts:
+      - "host.gateway.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
@@ -153,9 +159,9 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686"   # UI
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
     networks:
       - seguros-network
     profiles:
@@ -191,12 +197,35 @@ services:
       - monitoring
     restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # AI — profile: ai
+  # ---------------------------------------------------------------------------
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: seguros-open-webui
+    environment:
+      - OLLAMA_BASE_URL=http://host.gateway.internal:11434
+      - WEBUI_NAME=Assistente de Seguros
+      - WEBUI_SECRET_KEY=seguros-secret-key
+    extra_hosts:
+      - "host.gateway.internal:host-gateway"
+    ports:
+      - "8080:8080"
+    volumes:
+      - open_webui_data:/app/backend/data
+    networks:
+      - seguros-network
+    profiles:
+      - ai
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   rabbitmq_data:
   prometheus_data:
   grafana_data:
   loki_data:
+  open_webui_data:
 
 networks:
   seguros-network:

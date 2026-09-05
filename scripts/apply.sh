@@ -5,8 +5,6 @@
 # ============================================================
 
 ENV_FILE=".env"
-
-# Carrega o .env
 source $ENV_FILE
 
 echo ""
@@ -18,14 +16,12 @@ echo "  UsarBancoDados = $USAR_BANCO_DADOS"
 echo "  UsarRabbitMQ   = $USAR_RABBITMQ"
 echo ""
 
-# Para todos os containers (todos os profiles)
-docker compose --profile rabbitmq --profile monitoring down 2>/dev/null || docker compose down
+docker compose --profile rabbitmq --profile monitoring --profile ai down 2>/dev/null || docker compose down
 
-# Sobe com profiles conforme .env — monitoring sempre ativo
 if [ "$USAR_RABBITMQ" = "true" ]; then
-    docker compose --profile rabbitmq --profile monitoring up -d
+    docker compose --profile rabbitmq --profile monitoring --profile ai up -d
 else
-    docker compose --profile monitoring up -d
+    docker compose --profile monitoring --profile ai up -d
 fi
 
 echo ""
@@ -36,7 +32,9 @@ echo ""
 echo "  PropostaService:    http://$IP:5001"
 echo "  ContratacaoService: http://$IP:5002"
 echo "  Prometheus:         http://$IP:9090"
-echo "  Grafana:            http://$IP:3000  (admin/admin)"
+echo "  Grafana:            http://$IP:3000"
+echo "  Jaeger:             http://$IP:16686"
+echo "  Open WebUI:         http://$IP:8080"
 
 if [ "$USAR_RABBITMQ" = "true" ]; then
     echo "  RabbitMQ Painel:    http://$IP:15672"
