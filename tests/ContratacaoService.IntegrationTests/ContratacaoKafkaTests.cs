@@ -98,8 +98,8 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         await conn.OpenAsync();
 
         const string sql = @"
-            INSERT INTO proposta.propostas (id, cpf, tipo_seguro, valor_premio, status, criado_em)
-            VALUES (@Id, @Cpf, 1, 100.00, 'Aprovada', NOW())
+            INSERT INTO proposta.propostas (id, nome_cliente, cpf, tipo_seguro, valor, status, criado_em)
+            VALUES (@Id, 'Cliente Teste', @Cpf, 1, 100.00, 2, NOW())
             ON CONFLICT (id) DO NOTHING";
 
         using var cmd = conn.CreateCommand();
@@ -109,4 +109,5 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         await cmd.ExecuteNonQueryAsync();
     }
 }
+
 
