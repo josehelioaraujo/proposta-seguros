@@ -256,14 +256,6 @@ ContratarProposta_DevePublicarEventoNoKafka
 
 ### Destaques Técnicos
 
-**IServiceScopeFactory — Hosted Service com dependência Scoped:**
-
-O `OutboxPublisherWorker` é um `BackgroundService` (Singleton) mas precisa do `IOutboxRepository` (Scoped). A solução é injetar `IServiceScopeFactory` e criar um scope a cada ciclo — padrão oficial Microsoft para hosted services com serviços scoped.
-
-```csharp
-await using var scope = scopeFactory.CreateAsyncScope();
-var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
-```
 
 **Agnóstico ao broker — Strategy via DI:**
 
@@ -450,7 +442,11 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 ---
 
 
-## Estrutura Organizacional
+## 📁 Estrutura do Projeto
+
+<details>
+<summary><strong>Ver estrutura de pastas e principais classes</strong></summary>
+
 
 ```
 proposta-seguros/
@@ -498,7 +494,14 @@ proposta-seguros/
 
 ---
 
-## Como Executar
+</details>
+
+
+## 🚀 Como Executar
+
+<details>
+<summary><strong>Ver opções de execução — VPS, Docker local ou sem Docker</strong></summary>
+
 
 > Optei por VPS da Hostinger,em vez de ambiente local para aproximar o projeto de um cenário real de produção — provisionamento, deploy via SSH e operação com Docker em servidor Linux são habilidades que fazem parte do dia a dia de desenvolvimento moderno.
 
@@ -533,37 +536,36 @@ dotnet run
 
 ---
 
-## URLs
+</details>
+
+
+## 🌐 URLs, Endpoints e Acessos
+
+<details>
+<summary><strong>Ver URLs, endpoints das APIs e health checks</strong></summary>
 
 ### VPS Hostinger
 
 | Serviço | URL |
 |---|---|
 | PropostaService — Swagger | http://2.25.122.11:5001 |
-| PropostaService — Health | http://2.25.122.11:5001/health |
-| PropostaService — Info | http://2.25.122.11:5001/info |
 | ContratacaoService — Swagger | http://2.25.122.11:5002 |
-| ContratacaoService — Health | http://2.25.122.11:5002/health |
-| ContratacaoService — Info | http://2.25.122.11:5002/info |
+| Kafka UI | http://2.25.122.11:8082 |
 | RabbitMQ — Painel | http://2.25.122.11:15672 |
+| Grafana | http://2.25.122.11:3000 |
+| Prometheus | http://2.25.122.11:9090 |
+| Jaeger | http://2.25.122.11:16686 |
+| Adminer | http://2.25.122.11:5050 |
 
 ### Local
 
 | Serviço | URL |
 |---|---|
 | PropostaService — Swagger | http://localhost:5001 |
-| PropostaService — Health | http://localhost:5001/health |
-| PropostaService — Info | http://localhost:5001/info |
 | ContratacaoService — Swagger | http://localhost:5002 |
-| ContratacaoService — Health | http://localhost:5002/health |
-| ContratacaoService — Info | http://localhost:5002/info |
 | RabbitMQ — Painel | http://localhost:15672 |
 
----
-
-## Endpoints
-
-### PropostaService
+### Endpoints — PropostaService
 
 | Método | Rota | Descrição | Status |
 |--------|------|-----------|--------|
@@ -572,7 +574,7 @@ dotnet run
 | GET | /api/Propostas/{id} | Busca proposta por ID | 200 |
 | PATCH | /api/Propostas/{id}/status | Altera status da proposta | 200 |
 
-### ContratacaoService
+### Endpoints — ContratacaoService
 
 | Método | Rota | Descrição | Status |
 |--------|------|-----------|--------|
@@ -587,9 +589,14 @@ dotnet run
 | /health/live | :5001/health/live | :5002/health/live |
 | /health/ready | :5001/health/ready | :5002/health/ready |
 
----
+</details>
 
-## Migrations SQL
+
+## 🗃️ Migrations SQL
+
+<details>
+<summary><strong>Ver scripts de banco e estrutura criada</strong></summary>
+
 
 As migrations são aplicadas **automaticamente no startup** das APIs via **DbUp** quando `UsarBancoDados=true` — sem intervenção manual.
 
@@ -612,6 +619,9 @@ seguros_db
 ```
 
 ---
+
+</details>
+
 
 ## 🧪 Testes
 
