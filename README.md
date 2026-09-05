@@ -22,7 +22,30 @@ O projeto inclui pipeline CI/CD completo, testes de integração com Testcontain
 ---
 
 </details>
+ 
 
+## ⚙️ Tecnologias
+
+<details>
+<summary><strong>Ver stack completa de tecnologias</strong></summary>
+
+- .NET 10 / C#
+- PostgreSQL 16 + Dapper
+- Apache Kafka 3.9 (KRaft — event streaming, sem Zookeeper)
+- RabbitMQ 4 (message broker)
+- Outbox Pattern (garantia de entrega entre banco e mensageria)
+- DbUp (migrations automáticas no startup)
+- FluentValidation
+- xUnit / Moq / Bogus / FluentAssertions / Testcontainers
+- Docker / Docker Compose
+- Swagger / OpenAPI 3.0
+- ASP.NET Health Checks
+- Prometheus + Grafana (métricas e dashboards)
+- Jaeger + OpenTelemetry (distributed tracing)
+- Loki + Promtail (agregação de logs)
+- ModelContextProtocol.AspNetCore (MCP Server)
+
+</details>
 
 ## 📚 Documentação Rápida
 
@@ -424,27 +447,6 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 ---
 
 </details>
-
-
-## Tecnologias
-
-- .NET 10 / C#
-- PostgreSQL 16 + Dapper
-- Apache Kafka 3.9 (KRaft — mensageria event streaming)
-- RabbitMQ 4 (mensageria — message broker)
-- Outbox Pattern (garantia de entrega)
-- DbUp (migrations automáticas no startup)
-- FluentValidation
-- xUnit / Moq / Bogus / FluentAssertions
-- Docker / Docker Compose
-- Swagger / OpenAPI 3.0
-- ASP.NET Health Checks
-- Prometheus + Grafana (métricas e dashboards)
-- Jaeger + OpenTelemetry (distributed tracing)
-- Loki + Promtail (agregação de logs)
-- ModelContextProtocol.AspNetCore (MCP Server)
-
----
 
 
 ## 📁 Estrutura do Projeto
