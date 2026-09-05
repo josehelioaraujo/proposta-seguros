@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -14,7 +14,7 @@ Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Camadas — Hexagonal
+// Camadas â€” Hexagonal
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -27,7 +27,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title       = "Contratacao de Seguros API",
         Version     = "v1",
-        Description = "API para contratacao de propostas de seguro — Arquitetura Hexagonal"
+        Description = "API para contratacao de propostas de seguro â€” Arquitetura Hexagonal"
     });
 });
 
@@ -57,7 +57,7 @@ var usarRabbitMQ   = builder.Configuration.GetValue<bool>("Features:UsarRabbitMQ
 
 var healthChecks = builder.Services.AddHealthChecks()
     .AddCheck("contratacao-api", () =>
-        HealthCheckResult.Healthy("Contratacao de Seguros API — online"),
+        HealthCheckResult.Healthy("Contratacao de Seguros API â€” online"),
         tags: ["live"])
     .AddUrlGroup(
         uri:  new Uri((builder.Configuration["Services:PropostaService"]
@@ -76,7 +76,7 @@ if (usarBancoDados)
 if (usarRabbitMQ)
 {
     healthChecks.AddCheck("rabbitmq", () =>
-        HealthCheckResult.Healthy("RabbitMQ — online"),
+        HealthCheckResult.Healthy("RabbitMQ â€” online"),
         tags: ["ready", "mq"]);
 }
 
@@ -109,6 +109,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 // MCP endpoint
 app.MapMcp("/mcp");
+app.MapMcp("/sse");
 
 app.MapMetrics();
 app.Run();
+
