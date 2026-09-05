@@ -24,7 +24,7 @@ O projeto inclui pipeline CI/CD completo, testes de integração com Testcontain
 
 | | |
 |---|---|
-| 📋 [Changelog](CHANGELOG.md) | Histórico de versões e evolução do projeto |
+| 📋 [Changelog](Chaangelog.md) | Histórico de versões e evolução do projeto |
 | 📮 [Postman Collection](docs/postman/) | Cenários de teste prontos para importar |
 | 🗃️ [Migrations SQL](migrations/) | Scripts de banco versionados V001–V006 |
 | 📄 [Enunciado](docs/enunciado.md) | Especificação original do projeto |
