@@ -47,6 +47,12 @@ O sistema é composto por dois microserviços independentes:
 
 O sistema suporta **Kafka** e **RabbitMQ** de forma intercambiável via feature flags — sem alteração de código. A troca de broker é feita apenas no `.env` da VPS ou via pipeline CI/CD, demonstrando o padrão **12-Factor App** e a aderência real à Arquitetura Hexagonal.
 
+<details>
+<summary><strong>Ver detalhes — Arquitetura, Outbox Pattern, Kafka, RabbitMQ, Testes</strong></summary>
+
+
+O sistema suporta **Kafka** e **RabbitMQ** de forma intercambiável via feature flags — sem alteração de código. A troca de broker é feita apenas no `.env` da VPS ou via pipeline CI/CD, demonstrando o padrão **12-Factor App** e a aderência real à Arquitetura Hexagonal.
+
 ---
 
 ### Arquitetura de Mensageria
@@ -318,6 +324,9 @@ Com mensageria (assíncrono):
 ```
 
 ---
+
+
+</details>
 
 
 ## Diagrama Arquitetural
