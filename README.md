@@ -3,7 +3,6 @@
 [![CI/CD](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/josehelioaraujo/proposta-seguros/actions/workflows/ci-cd.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=alert_status)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=bugs)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
-[![Changelog](https://img.shields.io/badge/changelog-ver%20progresso-blue)](CHANGELOG.md)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=josehelioaraujo_proposta-seguros&metric=code_smells)](https://sonarcloud.io/project/overview?id=josehelioaraujo_proposta-seguros)
 
 
@@ -18,18 +17,20 @@ Ambos os serviços operam em dois modos intercambiáveis via feature flag — **
 O projeto inclui pipeline CI/CD completo, testes de integração com Testcontainers, smoke tests E2E via Newman, deploy automatizado em VPS real, stack completa de observabilidade (Prometheus, Grafana, Jaeger, Loki) e **MCP Server** expondo as operações das APIs como tools para agentes de IA.
 
 ---
- 
+  
 
 ## 📚 Documentação Rápida
 
 | | |
 |---|---|
-| 📋 [Changelog](Chaangelog.md) | Histórico de versões e evolução do projeto |
+| 📋 [Changelog](Changelog.md) | Histórico de versões e evolução do projeto |
 | 📮 [Postman Collection](docs/postman/) | Cenários de teste prontos para importar |
 | 🗃️ [Migrations SQL](migrations/) | Scripts de banco versionados V001–V006 |
 | 📄 [Enunciado](docs/enunciado.md) | Especificação original do projeto |
 
 ---
+
+ 
 
 ## Visão Geral
 
@@ -41,6 +42,283 @@ O sistema é composto por dois microserviços independentes:
 | **ContratacaoService** | Contratar propostas aprovadas e publicar eventos | 5002 |
 
 ---
+
+## 🔀 Integração com Mensagerias
+
+O sistema suporta **Kafka** e **RabbitMQ** de forma intercambiável via feature flags — sem alteração de código. A troca de broker é feita apenas no `.env` da VPS ou via pipeline CI/CD, demonstrando o padrão **12-Factor App** e a aderência real à Arquitetura Hexagonal.
+
+---
+
+### Arquitetura de Mensageria
+
+```
+ContratarPropostaUseCase
+  └── BEGIN TRANSACTION (PostgreSQL)
+        ├── INSERT contratacoes          ← dados da contratação
+        └── INSERT contratacao.outbox    ← evento pendente de publicação
+              COMMIT (atômico)
+
+OutboxPublisherWorker (BackgroundService — a cada 5s)
+  └── SELECT outbox WHERE processado = false
+        ├── KafkaEventPublisher  → tópico: proposta-contratada
+        │   ou
+        └── RabbitMqEventPublisher → exchange: proposta.exchange
+        └── UPDATE outbox SET processado = true
+```
+
+> **Outbox Pattern** garante atomicidade entre banco e mensageria — se a API cair após gravar a contratação mas antes de publicar, o worker retoma na próxima rodada. Zero perda de mensagem.
+
+---
+
+### Feature Flags de Mensageria
+
+| Flag | Valor | Comportamento |
+|------|-------|--------------|
+| `Features:UsarKafka` | `true` | Publica no Kafka (KRaft, sem Zookeeper) |
+| `Features:UsarRabbitMQ` | `true` | Publica no RabbitMQ |
+| Ambas | `false` | `NullEventPublisher` — API não falha |
+
+> **Regra:** apenas uma flag pode estar ativa por vez. O `IEventPublisher` é injetado via DI conforme a flag — o `OutboxPublisherWorker` não conhece o broker.
+ 
+---
+
+### Trocar de Broker — Zero Código
+
+**Via scripts na VPS:**
+
+```bash
+./scripts/set-kafka.sh --enable    # ativa Kafka, desativa RabbitMQ
+./scripts/set-kafka.sh --disable   # desativa Kafka
+
+./scripts/set-rabbitmq.sh --enable  # ativa RabbitMQ, desativa Kafka
+./scripts/set-rabbitmq.sh --disable # desativa RabbitMQ
+```
+
+**Via GitHub Actions (workflow_dispatch):**
+
+```
+Actions → CI/CD → Run workflow
+  ├── Broker: kafka / rabbitmq / nenhum
+  └── Usar banco: true / false
+```
+
+A esteira aplica as flags automaticamente na VPS, reinicia os containers e executa os Smoke Tests E2E para validar.
+
+---
+
+### Kafka — Apache Kafka KRaft
+
+Kafka rodando em modo **KRaft** (sem Zookeeper) — arquitetura moderna, 1 container apenas.
+
+```
+Broker:  seguros-kafka:9092
+Tópico:  proposta-contratada
+Modo:    KRaft (Apache Kafka 3.9.0)
+```
+
+**Configuração no `appsettings.json`:**
+
+```json
+{
+  "Features": { "UsarKafka": true },
+  "Kafka": {
+    "BootstrapServers": "kafka:9092",
+    "Topicos": {
+      "PropostaContratadaEvent": "proposta-contratada"
+    }
+  }
+}
+```
+
+**Kafka UI — Dashboard:**
+
+```
+URL: http://2.25.122.11:8082
+```
+
+O que visualizar no Kafka UI:
+
+```
+Topics → proposta-contratada
+  ├── Messages     — mensagens publicadas com payload JSON
+  ├── Consumers    — consumer groups ativos
+  └── Overview     — partições, offsets, throughput
+```
+
+---
+
+### RabbitMQ — Message Broker
+
+```
+Exchange:    proposta.exchange (Direct)
+Fila:        proposta.contratada.queue
+Routing Key: proposta.contratada
+```
+
+**RabbitMQ Management — Dashboard:**
+
+```
+URL:     http://2.25.122.11:15672
+Usuário: guest / Senha: guest
+```
+
+Para visualizar mensagens publicadas:
+
+```
+Queues → proposta.contratada.queue
+  → Get messages → Ackmode: Nack → Get Message(s)
+```
+
+Mensagem publicada:
+
+```json
+{
+  "ContratacaoId":   "48988e73-6c65-46f6-b10d-8b8352111df2",
+  "PropostaId":      "c13f6050-1426-48f9-83ae-41d7133fa7ba",
+  "Cpf":             "529.982.247-25",
+  "DataContratacao": "2026-09-05T14:30:00",
+  "OcorridoEm":      "2026-09-05T14:30:00"
+}
+```
+
+---
+
+### Outbox Pattern — Garantia de Entrega
+
+```
+SEM Outbox:
+  ├── INSERT contratacao  ✅
+  ├── API cai             💥
+  └── Evento perdido      ❌
+
+COM Outbox:
+  ├── INSERT contratacao + INSERT outbox  ✅ (mesma transação)
+  ├── API cai             💥
+  └── OutboxPublisherWorker retoma em 5s  ✅
+```
+
+Tabela `contratacao.outbox`:
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | UUID | Identificador do evento |
+| `tipo` | VARCHAR | Nome do evento (`PropostaContratadaEvent`) |
+| `payload` | JSONB | Corpo do evento serializado |
+| `processado` | BOOLEAN | `false` = pendente, `true` = publicado |
+| `criado_em` | TIMESTAMPTZ | Quando foi gravado |
+| `processado_em` | TIMESTAMPTZ | Quando foi publicado |
+
+---
+
+### Migrations — Automáticas no Startup
+
+As migrations SQL são aplicadas automaticamente no startup das APIs via **DbUp** quando `UsarBancoDados=true` — sem intervenção manual.
+
+| Migration | Descrição |
+|-----------|-----------|
+| V001 | CREATE SCHEMA proposta |
+| V002 | CREATE TABLE proposta.propostas |
+| V003 | CREATE SCHEMA contratacao |
+| V004 | CREATE TABLE contratacao.contratacoes |
+| V005 | ALTER TABLE contratacoes ADD COLUMN criado_em |
+| V006 | CREATE TABLE contratacao.outbox (Outbox Pattern) |
+
+---
+
+### Testes de Integração — Kafka e RabbitMQ
+
+Os testes sobem **infraestrutura real** via Testcontainers e validam o fluxo completo de publicação:
+
+```
+KafkaFixture (Testcontainers)
+  ├── docker run postgres:16-alpine   ← banco limpo
+  ├── docker run cp-kafka:7.4.0       ← kafka limpo
+  ├── aplica migrations V001-V006
+  └── sobe ContratacaoService apontando para esses containers
+
+ContratarProposta_DevePublicarEventoNoKafka
+  ├── registra proposta aprovada no FakePropostaClient
+  ├── POST /api/Contratacoes → 201 Created
+  ├── aguarda OutboxPublisherWorker (8s)
+  ├── consome do tópico proposta-contratada
+  └── verifica payload contém PropostaId ✅
+```
+
+> Sem Docker local os testes são pulados automaticamente (`Skip`) — sem falha.
+
+---
+
+### Destaques Técnicos
+
+**IServiceScopeFactory — Hosted Service com dependência Scoped:**
+
+O `OutboxPublisherWorker` é um `BackgroundService` (Singleton) mas precisa do `IOutboxRepository` (Scoped). A solução é injetar `IServiceScopeFactory` e criar um scope a cada ciclo — padrão oficial Microsoft para hosted services com serviços scoped.
+
+```csharp
+await using var scope = scopeFactory.CreateAsyncScope();
+var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
+```
+
+**Agnóstico ao broker — Strategy via DI:**
+
+```csharp
+if (usarKafka)
+    services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+else if (usarRabbitMQ)
+    services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+else
+    services.AddSingleton<IEventPublisher, NullEventPublisher>();
+```
+
+**GitOps — Feature flags via CI/CD:**
+
+```yaml
+workflow_dispatch:
+  inputs:
+    broker:
+      type: choice
+      options: [kafka, rabbitmq, nenhum]
+    usar_banco:
+      type: choice
+      options: ['true', 'false']
+```
+
+
+
+### Consumidores — O que acontece após a publicação
+
+O `ContratacaoService` atua como **produtor** — publica o evento e retorna 201 sem se preocupar com o que acontece a seguir. Esse é o princípio do desacoplamento via mensageria.
+
+| Consumidor | Responsabilidade |
+|------------|--------------------|
+| **ApoliceService** | Gera o documento PDF da apólice e disponibiliza ao segurado |
+| **CobrancaService** | Agenda o débito mensal do prêmio na conta ou cartão |
+| **NotificacaoService** | Envia e-mail/WhatsApp de confirmação ao segurado |
+| **SusepService** | Registra a contratação junto à SUSEP dentro do prazo legal de 24h |
+| **AntiFraudeService** | Analisa padrões suspeitos no perfil e na contratação |
+| **AuditoriaService** | Registra eventos em log imutável para compliance |
+
+> No projeto atual os consumidores não estão implementados — as mensagens ficam acumuladas no broker aguardando. Em produção real seriam processadas imediatamente.
+
+**Por que mensageria e não HTTP direto:**
+
+```
+Sem mensageria (HTTP síncrono):
+└── ContratacaoService chama cada serviço diretamente
+    ├── Se NotificacaoService cair  → contratação falha
+    ├── Se CobrancaService lento    → resposta demora
+    └── Acoplamento alto entre serviços
+
+Com mensageria (assíncrono):
+└── ContratacaoService publica o evento e retorna 201
+    ├── Cada consumidor processa no seu próprio ritmo
+    ├── Se um cair, a mensagem fica na fila até ele voltar
+    ├── Escala independente por serviço
+    └── Desacoplamento total
+```
+
+---
+
 
 ## Diagrama Arquitetural
 
@@ -674,23 +952,21 @@ app.MapMcp("/mcp");
 
 ## Destaques de Implementação
 
-### RabbitMQ — Mensageria
+### Mensageria — Outbox Pattern
 
-O ContratacaoService publica o evento PropostaContratadaEvent após cada contratação bem-sucedida.
+O `ContratacaoService` publica o evento `PropostaContratadaEvent` após cada contratação bem-sucedida. O broker ativo é definido por feature flag — Kafka ou RabbitMQ — sem alteração de código.
 
 ```
 Evento: PropostaContratadaEvent
-Exchange: proposta.exchange (Direct)
-Fila:     proposta.contratada.queue
 
 Consumidores em produção real:
-- ApoliceService   -> gera documento da apólice
-- CobrancaService  -> agenda débito mensal
-- NotificacaoService -> envia e-mail ao cliente
-- SusepService     -> registro regulatório
+- ApoliceService      -> gera documento da apólice
+- CobrancaService     -> agenda débito mensal
+- NotificacaoService  -> envia e-mail/WhatsApp ao cliente
+- SusepService        -> registro regulatório
 ```
 
-Feature flag: Features:UsarRabbitMQ
+Feature flags: `Features:UsarKafka` / `Features:UsarRabbitMQ`
 
 ### Health Checks — ASP.NET Nativo
 
@@ -904,6 +1180,7 @@ Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente
 
 
 ---
+
 
 ## Painéis Administrativos
 
