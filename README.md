@@ -329,6 +329,11 @@ Com mensageria (assíncrono):
 </details>
 
 
+## 🏗️ Arquitetura do Sistema
+
+<details>
+<summary><strong>Ver diagrama, fluxo de funcionamento e Arquitetura Hexagonal</strong></summary>
+
 ## Diagrama Arquitetural
 
 ```mermaid
@@ -420,6 +425,9 @@ O princípio central é que **a infraestrutura depende do domínio — nunca o c
 </details>
 
 ---
+
+</details>
+
 
 ## Tecnologias
 
