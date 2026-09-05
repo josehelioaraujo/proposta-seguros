@@ -19,6 +19,25 @@ on:
       - 'docker-compose.yml'
       - 'scripts/**'
       - 'observability/**'
+  workflow_dispatch:
+    inputs:
+      broker:
+        description: 'Broker de mensageria'
+        required: true
+        default: 'rabbitmq'
+        type: choice
+        options:
+          - kafka
+          - rabbitmq
+          - nenhum
+      usar_banco:
+        description: 'Usar banco de dados PostgreSQL'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
 
@@ -72,7 +91,7 @@ jobs:
       - name: Executar testes de integração
         run: dotnet test tests/PropostaService.IntegrationTests/PropostaService.IntegrationTests.csproj --no-build --configuration Release --verbosity normal
 
-  # ─── JOB 3: Testes de Integração — RabbitMQ ──────────────────────────────────
+  # ─── JOB 3: Testes de Integração — Mensageria (RabbitMQ + Kafka) ─────────────
   integration-test-mensageria:
     name: Testes de Integração Mensageria
     runs-on: ubuntu-latest
@@ -166,7 +185,7 @@ jobs:
     name: Deploy VPS
     runs-on: ubuntu-latest
     needs: [ integration-test-mensageria, sonar ]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
       # appleboy/ssh-action@v1.2.0 — corrige vulnerabilidade SSH.NET (GHSA-q939-rpr3-3284)
@@ -184,12 +203,39 @@ jobs:
             BUILD_COMMIT=$(git rev-parse --short HEAD)
             BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-            docker compose --profile monitoring --profile ai build \
+            docker compose --profile monitoring --profile ai --profile kafka build \
               --build-arg BUILD_VERSION=$BUILD_VERSION \
               --build-arg BUILD_COMMIT=$BUILD_COMMIT \
               --build-arg BUILD_DATE=$BUILD_DATE
 
-            docker compose --profile monitoring --profile ai up -d
+            docker compose --profile monitoring --profile ai --profile kafka up -d
+
+            # ── Aplicar feature flags se disparado via workflow_dispatch ────────
+            BROKER="${{ github.event.inputs.broker }}"
+            USAR_BANCO="${{ github.event.inputs.usar_banco }}"
+
+            if [ -n "$BROKER" ]; then
+              echo "workflow_dispatch detectado — aplicando feature flags..."
+              if [ "$BROKER" = "kafka" ]; then
+                sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=true/" .env
+                sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=false/" .env
+                echo "Broker: Kafka habilitado"
+              elif [ "$BROKER" = "rabbitmq" ]; then
+                sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=false/" .env
+                sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=true/" .env
+                echo "Broker: RabbitMQ habilitado"
+              else
+                sed -i "s/FEATURES__USARKAFKA=.*/FEATURES__USARKAFKA=false/" .env
+                sed -i "s/FEATURES__USARRABBITMQ=.*/FEATURES__USARRABBITMQ=false/" .env
+                echo "Broker: nenhum (NullEventPublisher)"
+              fi
+              if [ -n "$USAR_BANCO" ]; then
+                sed -i "s/FEATURES__USARBANCODODADOS=.*/FEATURES__USARBANCODODADOS=$USAR_BANCO/" .env
+                echo "UsarBancoDados: $USAR_BANCO"
+              fi
+              docker compose restart contratacao-api proposta-api
+              echo "Feature flags aplicadas e containers reiniciados"
+            fi
 
             echo "Deploy concluido - versao $BUILD_VERSION commit $BUILD_COMMIT em $BUILD_DATE"
 
@@ -198,7 +244,7 @@ jobs:
     name: Smoke Tests E2E
     runs-on: ubuntu-latest
     needs: deploy
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: Checkout
