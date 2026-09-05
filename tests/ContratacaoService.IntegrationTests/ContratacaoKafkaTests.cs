@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using Confluent.Kafka;
+using Confluent.Kafka.Admin;
 using FluentAssertions;
 using ContratacaoService.IntegrationTests.Fixtures;
 using Microsoft.Extensions.Configuration;
@@ -43,17 +44,36 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         var propostaId = Guid.NewGuid();
         var cpf        = "529.982.247-25";
 
-        // Registra proposta aprovada no fake — sem chamada HTTP
+        // Registra proposta aprovada no fake - sem chamada HTTP
         _fixture.FakePropostaClient.Registrar(propostaId, "Aprovada");
 
+        // Criar topico antes de publicar
+        var adminConfig = new AdminClientConfig { BootstrapServers = _fixture.KafkaBootstrapServers };
+        using var adminClient = new AdminClientBuilder(adminConfig).Build();
+        try
+        {
+            await adminClient.CreateTopicsAsync(new[]
+            {
+                new TopicSpecification
+                {
+                    Name = "proposta-contratada",
+                    NumPartitions = 1,
+                    ReplicationFactor = 1
+                }
+            });
+        }
+        catch (CreateTopicsException) { /* topico ja existe */ }
+
+        // Contratar via API
         var payload  = new { propostaId, cpf };
         var response = await _client.PostAsJsonAsync("/api/Contratacoes", payload);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
 
-        // Aguarda OutboxRelayWorker publicar (intervalo 5s + margem)
+        // Aguardar OutboxRelayWorker publicar (intervalo 5s + margem)
         await Task.Delay(TimeSpan.FromSeconds(8));
 
-        var config = new ConsumerConfig
+        // Consumir do Kafka e verificar mensagem
+        var consumerConfig = new ConsumerConfig
         {
             BootstrapServers = _fixture.KafkaBootstrapServers,
             GroupId          = $"test-consumer-{Guid.NewGuid()}",
@@ -61,41 +81,7 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
             EnableAutoCommit = false
         };
 
-        // Criar topico se nao existir
-        var adminConfig = new AdminClientConfig { BootstrapServers = _fixture.KafkaBootstrapServers };
-        using var admin = new AdminClientBuilder(adminConfig).Build();
-        try
-        {
-            await admin.CreateTopicsAsync(new[]
-            {
-                new Confluent.Kafka.Admin.TopicSpecification
-                {
-                    Name = "proposta-contratada",
-                    NumPartitions = 1,
-                    ReplicationFactor = 1
-                }
-            });
-        }
-        catch (Confluent.Kafka.Admin.CreateTopicsException) { /* topico ja existe */ }
-
-        // Criar topico se nao existir
-        var adminConfig = new AdminClientConfig { BootstrapServers = _fixture.KafkaBootstrapServers };
-        using var admin = new AdminClientBuilder(adminConfig).Build();
-        try
-        {
-            await admin.CreateTopicsAsync(new[]
-            {
-                new Confluent.Kafka.Admin.TopicSpecification
-                {
-                    Name = "proposta-contratada",
-                    NumPartitions = 1,
-                    ReplicationFactor = 1
-                }
-            });
-        }
-        catch (Confluent.Kafka.Admin.CreateTopicsException) { /* topico ja existe */ }
-
-        using var consumer = new ConsumerBuilder<string, string>(config).Build();
+        using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
         consumer.Subscribe("proposta-contratada");
 
         var mensagemRecebida = false;
@@ -125,5 +111,3 @@ public class ContratacaoKafkaTests : IClassFixture<KafkaFixture>
         content.Should().Contain("Healthy");
     }
 }
-
-
