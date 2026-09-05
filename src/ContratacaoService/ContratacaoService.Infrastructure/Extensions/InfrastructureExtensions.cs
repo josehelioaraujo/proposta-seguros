@@ -31,6 +31,7 @@ public static class InfrastructureExtensions
         else
         {
             services.AddSingleton<IContratacaoRepository, InMemoryContratacaoRepository>();
+            services.AddSingleton<IOutboxRepository, NullOutboxRepository>();
         }
 
         services.AddHttpClient<IPropostaServiceClient, HttpPropostaServiceClient>(client =>
@@ -65,6 +66,4 @@ public static class InfrastructureExtensions
         return services;
     }
 }
-
-
 
