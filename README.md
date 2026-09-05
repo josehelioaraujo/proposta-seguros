@@ -613,7 +613,11 @@ seguros_db
 
 ---
 
-## Testes de Unidade
+## 🧪 Testes
+
+<details>
+<summary><strong>Ver como executar os testes unitários e de integração</strong></summary>
+
 
 ```bash
 dotnet test .\proposta-seguros.sln
@@ -626,7 +630,14 @@ total: 13 | falhou: 0 | bem-sucedido: 13
 
 ---
 
-## Testando via Postman
+</details>
+
+
+## 📮 Postman Collection
+
+<details>
+<summary><strong>Ver como importar e usar a collection</strong></summary>
+
 
 ### 1. Importar os arquivos
 
@@ -659,7 +670,14 @@ Canto superior direito do Postman:
 
 ---
 
-## Simulação Completa de Testes
+</details>
+
+
+## 🎭 Simulação Completa de Testes
+
+<details>
+<summary><strong>Ver cenários InMemory, PostgreSQL e Kafka/RabbitMQ</strong></summary>
+
 
 ### Cenário 1 — InMemory
 
@@ -729,7 +747,14 @@ Fila:    proposta.contratada.queue
 
 ---
 
-## Feature Flags
+</details>
+
+
+## 🚩 Feature Flags
+
+<details>
+<summary><strong>Ver flags disponíveis e scripts de operação</strong></summary>
+
 
 | Flag | false (padrão) | true |
 |------|----------------|------|
@@ -755,7 +780,14 @@ Fila:    proposta.contratada.queue
 
 ---
 
-## Observabilidade
+</details>
+
+
+## 📊 Observabilidade
+
+<details>
+<summary><strong>Ver Prometheus, Grafana, Jaeger, Loki e URLs</strong></summary>
+
 
 Stack completa de observabilidade rodando em produção — métricas, logs e traces distribuídos, integrada e acessível via browser.
 
@@ -873,7 +905,14 @@ Os painéis de logs estão integrados no dashboard do Grafana.
 
 ---
 
-## MCP Server
+</details>
+
+
+## 🤖 MCP Server — Integração com IA
+
+<details>
+<summary><strong>Ver tools disponíveis e como conectar ao Claude</strong></summary>
+
 
 Ambas as APIs expõem um **MCP Server** (Model Context Protocol), permitindo que agentes de IA como o Claude interajam diretamente com o sistema em linguagem natural — sem precisar construir requisições HTTP manualmente.
 
@@ -967,7 +1006,14 @@ app.MapMcp("/mcp");
 
 </details>
 
-## Destaques de Implementação
+</details>
+
+
+## ⭐ Destaques de Implementação
+
+<details>
+<summary><strong>Ver padrões e decisões técnicas do projeto</strong></summary>
+
 
 ### Mensageria — Outbox Pattern
 
@@ -1094,7 +1140,14 @@ Os testes são controlados pela variável `RUN_INTEGRATION_TESTS`:
 
 ---
 
-## Containers Docker
+</details>
+
+
+## 🐳 Containers Docker
+
+<details>
+<summary><strong>Ver containers, imagens e configurações</strong></summary>
+
 
 | Container | Imagem | Porta | Descrição |
 |-----------|--------|-------|-----------|
@@ -1124,7 +1177,14 @@ seguros-rabbitmq
 
 ---
 
-## Scripts de Operação
+</details>
+
+
+## 🛠️ Scripts de Operação
+
+<details>
+<summary><strong>Ver todos os scripts disponíveis na VPS</strong></summary>
+
 
 Todos os scripts ficam na pasta `scripts/` e devem ser executados
 a partir da raiz do projeto na VPS.
@@ -1199,7 +1259,14 @@ Os scripts `set-banco.sh` e `set-rabbitmq.sh` atualizam o `.env` automaticamente
 ---
 
 
-## Painéis Administrativos
+</details>
+
+
+## 🖥️ Painéis Administrativos
+
+<details>
+<summary><strong>Ver Adminer, RabbitMQ Management e Kafka UI</strong></summary>
+
 
 ### Adminer — PostgreSQL
 
@@ -1270,3 +1337,4 @@ Conteúdo esperado:
   "OcorridoEm":      "2026-08-30T00:54:47"
 }
 ```
+</details>
